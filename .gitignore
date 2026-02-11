@@ -1,0 +1,29 @@
+.vs/
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.DotSettings.user
+_ReSharper*/
+*.ide
+
+# Visual Studio cache files
+*.VC.db
+*.VC.VC.opendb
+
+# Build results
+*.log
+
+# Ignore publish folders
+publish/
+
+# Ignore NuGet packages
+*.nupkg
+/packages/
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Resx files should be tracked if they are part of the project
