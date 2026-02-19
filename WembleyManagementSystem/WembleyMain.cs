@@ -5,7 +5,6 @@ using System.Drawing;
 
 namespace WembleyManagementSystem
 {
-    //My code
     //This is the Ui that shows after someone buys a ticket
     public class PurchaseConfirmationForm : Form
     {
@@ -30,9 +29,9 @@ namespace WembleyManagementSystem
     public class ClientForm : Form
     {
         private DataGridView eventGrid = new DataGridView();
-        private EventManagmentSystem _system;
+        private EventManagementSystem _system;
 
-        public ClientForm(EventManagmentSystem system)
+        public ClientForm(EventManagementSystem system)
         {
             _system = system;
             this.Text = "Wembley Events - Client Portal";
@@ -65,7 +64,8 @@ namespace WembleyManagementSystem
                 eventGrid.Columns.Add(buyCol);
             }
 
-            eventGrid.CellContentClick += (s, e) => {
+            eventGrid.CellContentClick += (s, e) =>
+            {
                 if (e.ColumnIndex == eventGrid.Columns["BuyButton"].Index && e.RowIndex >= 0)
                 {
                     var selectedEvent = (WembleyEvent)eventGrid.Rows[e.RowIndex].DataBoundItem;
@@ -82,21 +82,6 @@ namespace WembleyManagementSystem
                     eventGrid.Refresh();
                 }
             };
-        }
-    }
-
-    public class WembleyEvent
-    {
-        public int EventID { get; set; } // Unique identifier for the event
-        public string EventName { get; set; } // Name of the event (Tottnham vs Arsenal)
-        public DateTime EventDate { get; set; } // Date and time of the event
-        public string EventType { get; set; } // Type of event (Football, Concert)
-        public int Attendance { get; set; } // Number of attendees expected or recorded for the event
-        public int EventPrice { get; set; } // Price of the event ticket in GBP
-
-        public WembleyEvent(int EventID)
-        {
-            this.EventID = EventID;
         }
     }
 
@@ -117,6 +102,7 @@ namespace WembleyManagementSystem
             {
                 return Event.EventID;
             }
+
             return -1; // Returning error
         }
     }
@@ -125,6 +111,18 @@ namespace WembleyManagementSystem
     {
         private EventNode root;
 
+        public EventBinaryTree()
+        {
+            root = null;
+        }
+
+        //Get root node
+        public EventNode GetRoot()
+        {
+            return root;
+        }
+
+        //Inserting
         public void Insert(WembleyEvent wembleyEvent)
         {
             if (root == null)
@@ -132,53 +130,283 @@ namespace WembleyManagementSystem
                 root = new EventNode(wembleyEvent);
                 return;
             }
+
             InsertRec(root, wembleyEvent);
+
+            //Rebalancing the tree after every inserting new node
+            Rebalance();
         }
 
         private void InsertRec(EventNode currentRoot, WembleyEvent wembleyEvent)
         {
             if (currentRoot.GetEventID() < wembleyEvent.EventID)
             {
-                if (currentRoot.Right == null) currentRoot.Right = new EventNode(wembleyEvent);
-                else InsertRec(currentRoot.Right, wembleyEvent);
+                if (currentRoot.Right == null)
+                {
+                    currentRoot.Right = new EventNode(wembleyEvent);
+                }
+                else
+                {
+                    InsertRec(currentRoot.Right, wembleyEvent);
+                }
             }
             else if (currentRoot.GetEventID() > wembleyEvent.EventID)
             {
-                if (currentRoot.Left == null) currentRoot.Left = new EventNode(wembleyEvent);
-                else InsertRec(currentRoot.Left, wembleyEvent);
+                if (currentRoot.Left == null)
+                {
+                    currentRoot.Left = new EventNode(wembleyEvent);
+                }
+                else
+                {
+                    InsertRec(currentRoot.Left, wembleyEvent);
+                }
+            }
+
+        }
+
+        //Delete
+        public void Delete(WembleyEvent wembleyEvent)
+        {
+            root = DeleteRec(root, wembleyEvent.EventID);
+        }
+
+        private EventNode DeleteRec(EventNode currentRoot, int eventID)
+        {
+            // Base case: empty tree
+            if (currentRoot == null)
+            {
+                return null;
+            }
+
+            //Traverse the tree to find the node to delete
+            if (eventID < currentRoot.GetEventID())
+            {
+                currentRoot.Left = DeleteRec(currentRoot.Left, eventID);
+            }
+            else if (eventID > currentRoot.GetEventID())
+            {
+                currentRoot.Right = DeleteRec(currentRoot.Right, eventID);
+            }
+            else
+            {
+                //Node with no children
+                if (currentRoot.Left == null && currentRoot.Right == null)
+                {
+                    return null;
+                }
+
+                //Node with only one child
+                if (currentRoot.Left == null)
+                {
+                    return currentRoot.Right;
+                }
+                if (currentRoot.Right == null)
+                {
+                    return currentRoot.Left;
+                }
+
+                //Node with two children
+                EventNode successor = FindMin(currentRoot.Right);
+                currentRoot.Event = successor.Event;
+                currentRoot.Right = DeleteRec(currentRoot.Right, successor.GetEventID());
+            }
+
+            return currentRoot;
+        }
+
+        private EventNode FindMin(EventNode node)
+        {
+            //Find the leftmost node in the subtree
+            while (node.Left != null)
+            {
+                node = node.Left;
+            }
+            return node;
+        }
+
+        //Searching
+        public EventNode FindEvent(int eventID)
+        {
+            return FindEventRec(root, eventID);
+        }
+
+        public EventNode FindEventRec(EventNode currentRoot, int eventID)
+        {
+            if (currentRoot.GetEventID() < eventID)
+            {
+                if (currentRoot.Right != null)
+                {
+                    if (currentRoot.Right.GetEventID() == eventID)
+                    {
+                        return currentRoot.Right;
+                    }
+                    else
+                    {
+                        return FindEventRec(currentRoot.Right, eventID);
+                    }
+                }
+                else
+                {
+                    return new EventNode(new WembleyEvent(-1));
+                }
+            }
+            else
+            {
+                if (currentRoot.Left != null)
+                {
+                    if (currentRoot.Left.GetEventID() == eventID)
+                    {
+                        return currentRoot.Left;
+                    }
+                    else
+                    {
+                        return FindEventRec(currentRoot.Left, eventID);
+                    }
+                }
+                else
+                {
+                    return new EventNode(new WembleyEvent(-1));
+                }
+            }
+
+        }
+
+        //Rebalancing Tree
+        private void Rebalance()
+        {
+
+            if (root == null)
+            {
+                return;
+            }
+
+            //Get all events in sorted order
+            int size = GetSize();
+            WembleyEvent[] events = new WembleyEvent[size];
+            int index = 0;
+            GetAll(root, events, ref index);
+
+            //Rebuild tree from sorted array
+            root = BuildBalancedTree(events, 0, size - 1);
+        }
+
+        private EventNode BuildBalancedTree(WembleyEvent[] events, int start, int end)
+        {
+            //TODO maybe some improvement
+
+            if (start > end)
+            {
+                return null;
+            }
+
+            //Making the middle element root
+            int mid = start + (end - start) / 2;
+            EventNode node = new EventNode(events[mid]);
+
+            node.Left = BuildBalancedTree(events, start, mid - 1);
+            node.Right = BuildBalancedTree(events, mid + 1, end);
+
+            return node;
+        }
+
+        //Get size of tree
+        public int GetSize()
+        {
+            return GetSizeRec(root);
+        }
+
+        private int GetSizeRec(EventNode node)
+        {
+            if (node == null)
+            {
+                return 0;
+            }
+
+            return 1 + GetSizeRec(node.Left) + GetSizeRec(node.Right);
+        }
+
+        //Get all events in array
+        public void GetAll(EventNode node, WembleyEvent[] events, ref int index)
+        {
+            if (node == null)
+            {
+                return;
+            }
+
+            // In-order traversal (left, current, right)
+            GetAll(node.Left, events, ref index);
+            events[index] = node.Event;
+            index++;
+            GetAll(node.Right, events, ref index);
+        }
+
+        //Printing Tree
+        public void Print()
+        {
+            PrintRec(root, "", false);
+        }
+
+        private void PrintRec(EventNode node, string indent, bool isLeft)
+        {
+            if (node == null)
+            {
+                Console.WriteLine(indent + (isLeft ? "└── " : "┌── ") + "∅");
+                return;
+            }
+
+            // Print right subtree
+            if (node.Right != null)
+            {
+                PrintRec(node.Right, indent + (isLeft ? "    " : "│   "), false);
+            }
+            else
+            {
+                Console.WriteLine(indent + (isLeft ? "    " : "│   ") + "┌── ∅");
+            }
+
+            // Print current node
+            Console.WriteLine(indent + (isLeft ? "└── " : "┌── ") + $"{node.GetEventID()}");
+
+            // Print left subtree
+            if (node.Left != null)
+            {
+                PrintRec(node.Left, indent + (isLeft ? "│   " : "    "), true);
+            }
+            else
+            {
+                Console.WriteLine(indent + (isLeft ? "│   " : "    ") + "└── ∅");
             }
         }
 
-        public void GetAll(EventNode node, List<WembleyEvent> list)
-        {
-            if (node == null) return;
-            GetAll(node.Left, list);
-            list.Add(node.Event);
-            GetAll(node.Right, list);
-        }
-
-        public EventNode FindEvent(int eventID) => FindEventRec(root, eventID);
-
-        private EventNode FindEventRec(EventNode currentRoot, int eventID)
-        {
-            if (currentRoot == null || currentRoot.GetEventID() == eventID) return currentRoot;
-            return eventID < currentRoot.GetEventID() ? FindEventRec(currentRoot.Left, eventID) : FindEventRec(currentRoot.Right, eventID);
-        }
-
-        public EventNode GetRoot() => root;
     }
 
-    public class EventManagmentSystem
+    public class WembleyEvent
     {
-        private EventBinaryTree _tree = new EventBinaryTree();
+        public int EventID { get; set; } // Unique identifier for the event
+        public string EventName { get; set; } // Name of the event (Tottnham vs Arsenal)
+        public DateTime EventDate { get; set; } // Date and time of the event
+        public string EventType { get; set; } // Type of event (Football, Concert)
+        public int Attendance { get; set; } // Number of attendees expected or recorded for the event
+        public int EventPrice { get; set; } // Price of the event ticket in GBP
 
-        public void AddEvent(WembleyEvent wembleyEvent) => _tree.Insert(wembleyEvent);
-
-        public List<WembleyEvent> GetAllEvents()
+        public WembleyEvent(int EventID /* just for test need to add all later */)
         {
-            List<WembleyEvent> events = new List<WembleyEvent>();
-            _tree.GetAll(_tree.GetRoot(), events);
-            return events;
+            this.EventID = EventID;
+        }
+    }
+
+    public class EventManagementSystem
+    {
+        private EventBinaryTree _tree;
+
+        public EventManagementSystem()
+        {
+            _tree = new EventBinaryTree();
+        }
+
+        public void AddEvent(WembleyEvent wembleyEvent)
+        {
+            _tree.Insert(wembleyEvent);
         }
 
         public void UpdateEvent(int eventId, WembleyEvent updatedEvent)
@@ -186,21 +414,101 @@ namespace WembleyManagementSystem
             var node = _tree.FindEvent(eventId);
             if (node != null) node.Event.Attendance = updatedEvent.Attendance;
         }
+
+        public void DeleteEvent(int eventId)
+        {
+            _tree.Delete(_tree.FindEvent(eventId).Event);
+        }
+
+        public WembleyEvent GetEvent(int eventId)
+        {
+            return _tree.FindEvent(eventId).Event;
+        }
+
+        public WembleyEvent[] GetAllEvents()
+        {
+            int size = _tree.GetSize();
+            WembleyEvent[] events = new WembleyEvent[size];
+            int index = 0;
+            _tree.GetAll(_tree.GetRoot(), events, ref index);
+            return events;
+        }
     }
 
-    // runs the winform app!
+    public class User
+    {
+        public int UserID { get; set; } // Unique identifier for the user
+        public string Username { get; set; } // Name of the user
+        public string Email { get; set; } // Email address of the user
+        public string Password { get; set; } // Password for user authentication
+        public string UserRole { get; set; } // Admin, Client, Bussiness
+    }
+
+    public class UserManagementSystem
+    {
+        public void RegisterUser(User user)
+        {
+
+        }
+
+        public void UpdateUser(int userId, User updatedUser)
+        {
+
+        }
+
+        public void DeleteUser(int userId)
+        {
+
+        }
+
+        public User GetUser(int userId)
+        {
+            return null;
+        }
+
+        public List<User> GetAllUsers()
+        {
+            return new List<User>();
+        }
+    }
+
     public static class Program
     {
-        [STAThread]
-        static void Main()
+
+        public static void Main()
         {
+            //Binary tree test
+
+            EventBinaryTree eventBinaryTree = new EventBinaryTree();
+
+            for (int i = 0; i < 10; ++i)
+            {
+                eventBinaryTree.Insert(new WembleyEvent(i));
+            }
+
+            eventBinaryTree.Print();
+
+            EventNode test = eventBinaryTree.FindEvent(8);
+
+            Console.WriteLine("Found Node is " + test.GetEventID().ToString());
+
+            Console.WriteLine("-------------------");
+
+            eventBinaryTree.Delete(eventBinaryTree.FindEvent(5).Event);
+
+            eventBinaryTree.Print();
+
+
+
+            //UI
             ApplicationConfiguration.Initialize();
 
-            EventManagmentSystem system = new EventManagmentSystem();
+            EventManagementSystem system = new EventManagementSystem();
             system.AddEvent(new WembleyEvent(101) { EventName = "Tottenham vs Arsenal", Attendance = 50000 });
             system.AddEvent(new WembleyEvent(102) { EventName = "Coldplay Concert", Attendance = 80000 });
 
             Application.Run(new ClientForm(system));
+
         }
     }
 }
