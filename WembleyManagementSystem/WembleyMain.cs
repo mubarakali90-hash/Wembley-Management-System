@@ -5,7 +5,7 @@ using System.Drawing;
 
 namespace WembleyManagementSystem
 {
-    //UI
+    //UI test
     public class PurchaseConfirmationForm : Form
     {
         public PurchaseConfirmationForm()
