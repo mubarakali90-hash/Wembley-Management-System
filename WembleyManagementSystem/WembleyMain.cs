@@ -2,10 +2,21 @@
 using System.Collections.Generic;
 using System.Windows.Forms;
 using System.Drawing;
+using System.Data;
+using System.Data.SqlClient;
 
 namespace WembleyManagementSystem
 {
-    //UI test
+     public class DatabaseManager
+{
+    private string connectionString = 
+        "Server=YOUR_SERVER_NAME;Database=WembleyManagementDB;Trusted_Connection=True;";
+
+    public SqlConnection GetConnection()
+    {
+        return new SqlConnection(connectionString);
+    }
+}
     public class PurchaseConfirmationForm : Form
     {
         public PurchaseConfirmationForm()
