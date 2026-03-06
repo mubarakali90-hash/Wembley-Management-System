@@ -10,11 +10,32 @@ namespace WembleyManagementSystem
      public class DatabaseManager
 {
     private string connectionString = 
-        "Server=YOUR_SERVER_NAME;Database=WembleyManagementDB;Trusted_Connection=True;";
+        "Server=localhost;Database=WembleyManagementDB;Trusted_Connection=True;";
 
     public SqlConnection GetConnection()
     {
         return new SqlConnection(connectionString);
+    }
+}
+public void GetEvents()
+{
+    using (SqlConnection conn = GetConnection())
+    {
+        conn.Open();
+
+        string query = "SELECT * FROM Events";
+
+        SqlCommand cmd = new SqlCommand(query, conn);
+        SqlDataReader reader = cmd.ExecuteReader();
+
+        while (reader.Read())
+        {
+            Console.WriteLine("Event: " + reader["EventName"]);
+            Console.WriteLine("Date: " + reader["EventDate"]);
+            Console.WriteLine("Location: " + reader["Location"]);
+        }
+
+        conn.Close();
     }
 }
     public class PurchaseConfirmationForm : Form
