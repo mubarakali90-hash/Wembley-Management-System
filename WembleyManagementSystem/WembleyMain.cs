@@ -7,37 +7,101 @@ using System.Data.SqlClient;
 
 namespace WembleyManagementSystem
 {
-     public class DatabaseManager
-{
-    private string connectionString = 
-        "Server=localhost;Database=WembleyManagementDB;Trusted_Connection=True;";
-
-    public SqlConnection GetConnection()
+    public class DatabaseManager
     {
-        return new SqlConnection(connectionString);
-    }
-}
-public void GetEvents()
+        private string connectionString =
+        "Server=tcp:YOURSERVER.database.windows.net,1433;Initial Catalog=WembleyManagementDB;User ID=USERNAME;Password=PASSWORD;Encrypt=True;";
+
+        public SqlConnection GetConnection()
+        {
+            return new SqlConnection(connectionString);
+        }
+public void AddEvent(string name, DateTime date, string location)
 {
     using (SqlConnection conn = GetConnection())
     {
         conn.Open();
 
-        string query = "SELECT * FROM Events";
+        string query = "INSERT INTO Events (EventName, EventDate, Location) VALUES (@name,@date,@location)";
 
         SqlCommand cmd = new SqlCommand(query, conn);
+
+        cmd.Parameters.AddWithValue("@name", name);
+        cmd.Parameters.AddWithValue("@date", date);
+        cmd.Parameters.AddWithValue("@location", location);
+
+        cmd.ExecuteNonQuery();
+    }
+}
+
+public void DeleteEvent(int eventId)
+{
+    using (SqlConnection conn = GetConnection())
+    {
+        conn.Open();
+
+        string query = "DELETE FROM Events WHERE EventId=@id";
+
+        SqlCommand cmd = new SqlCommand(query, conn);
+        cmd.Parameters.AddWithValue("@id", eventId);
+
+        cmd.ExecuteNonQuery();
+    }
+}
+
+public void AddUser(string name, string email, string role)
+{
+    using (SqlConnection conn = GetConnection())
+    {
+        conn.Open();
+
+        string query = "INSERT INTO Users (Name, Email, Role) VALUES (@name,@email,@role)";
+
+        SqlCommand cmd = new SqlCommand(query, conn);
+
+        cmd.Parameters.AddWithValue("@name", name);
+        cmd.Parameters.AddWithValue("@email", email);
+        cmd.Parameters.AddWithValue("@role", role);
+
+        cmd.ExecuteNonQuery();
+    }
+}
+
+public void DeleteUser(int userId)
+{
+    using (SqlConnection conn = GetConnection())
+    {
+        conn.Open();
+
+        string query = "DELETE FROM Users WHERE UserId=@id";
+
+        SqlCommand cmd = new SqlCommand(query, conn);
+        cmd.Parameters.AddWithValue("@id", userId);
+
+        cmd.ExecuteNonQuery();
+    }
+}
+
+public void GetUsers()
+{
+    using (SqlConnection conn = GetConnection())
+    {
+        conn.Open();
+
+        string query = "SELECT * FROM Users";
+
+        SqlCommand cmd = new SqlCommand(query, conn);
+
         SqlDataReader reader = cmd.ExecuteReader();
 
         while (reader.Read())
         {
-            Console.WriteLine("Event: " + reader["EventName"]);
-            Console.WriteLine("Date: " + reader["EventDate"]);
-            Console.WriteLine("Location: " + reader["Location"]);
+            Console.WriteLine(reader["Name"] + " - " + reader["Role"]);
         }
-
-        conn.Close();
     }
 }
+
+
     public class PurchaseConfirmationForm : Form
     {
         public PurchaseConfirmationForm()
