@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Windows.Forms;
+using System.Configuration;
+using System.Data.SqlClient;
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace WembleyManagementSystem
 {
@@ -69,18 +71,207 @@ namespace WembleyManagementSystem
                 {
                     var selectedEvent = (WembleyEvent)eventGrid.Rows[e.RowIndex].DataBoundItem;
 
-                    //incres the attendance for the event by 1
+                    //increase the attendance for the event by 1
                     selectedEvent.Attendance += 1;
 
                     //updates the attendance for the event
                     _system.UpdateEvent(selectedEvent.EventID, selectedEvent);
 
-                    //opens tge UI to show the message
+                    //opens the UI to show the message
                     new PurchaseConfirmationForm().ShowDialog();
 
                     eventGrid.Refresh();
                 }
             };
+        }
+    }
+
+    //Database Part
+    public class DatabaseManager
+    {
+        private readonly string connString = "Server=tcp:wembley.database.windows.net,1433;Initial Catalog=free-sql-db-3371518;Persist Security Info=False;User ID=CloudSA5eb133b3;Password=mEWBW!hwAKM*G8FBsEokQAK;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
+
+        //Wembley Events
+        public void LoadEventsIntoTree(EventBinaryTree tree)
+        {
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                string sql = "SELECT EventID, EventName, EventDate, EventType, Attendance, EventPrice FROM Events ORDER BY EventID";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    conn.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            WembleyEvent wembleyEvent = new WembleyEvent(reader.GetInt32(0), reader.GetString(1), reader.GetDateTime(2), reader.GetString(3), reader.GetInt32(4), reader.GetInt32(5));
+
+                            //Insert the event into the binary tree
+                            tree.Insert(wembleyEvent);
+                        }
+                    }
+                }
+            }
+        }
+
+        public void InsertEvent(WembleyEvent wembleyEvent)
+        {
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                string sql = @"INSERT INTO Events
+                           (EventID, EventName, EventDate, EventType, Attendance, EventPrice)
+                           VALUES
+                           (@EventID, @EventName, @EventDate, @EventType, @Attendance, @EventPrice)";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@EventID", wembleyEvent.EventID);
+                    cmd.Parameters.AddWithValue("@EventName", wembleyEvent.EventName);
+                    cmd.Parameters.AddWithValue("@EventDate", wembleyEvent.EventDate);
+                    cmd.Parameters.AddWithValue("@EventType", wembleyEvent.EventType);
+                    cmd.Parameters.AddWithValue("@Attendance", wembleyEvent.Attendance);
+                    cmd.Parameters.AddWithValue("@EventPrice", wembleyEvent.EventPrice);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void UpdateEvent(WembleyEvent wembleyEvent)
+        {
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                string sql = @"UPDATE Events
+                           SET EventName = @EventName,
+                               EventDate = @EventDate,
+                               EventType = @EventType,
+                               Attendance = @Attendance,
+                               EventPrice = @EventPrice
+                           WHERE EventID = @EventID";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@EventID", wembleyEvent.EventID);
+                    cmd.Parameters.AddWithValue("@EventName", wembleyEvent.EventName);
+                    cmd.Parameters.AddWithValue("@EventDate", wembleyEvent.EventDate);
+                    cmd.Parameters.AddWithValue("@EventType", wembleyEvent.EventType);
+                    cmd.Parameters.AddWithValue("@Attendance", wembleyEvent.Attendance);
+                    cmd.Parameters.AddWithValue("@EventPrice", wembleyEvent.EventPrice);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void DeleteEvent(int eventId)
+        {
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                string sql = "DELETE FROM Events WHERE EventID = @EventID";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@EventID", eventId);
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        //Users
+        public void LoadUsersIntoList(UserLinkedList userList)
+        {
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                string sql = "SELECT UserID, Username, Email, Password, UserRole FROM Users ORDER BY UserID";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    conn.Open();
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            User user = new User()
+                            {
+                                UserID = reader.GetInt32(0),
+                                Username = reader.GetString(1),
+                                Email = reader.GetString(2),
+                                Password = reader.GetString(3),
+                                UserRole = reader.GetString(4)
+                            };
+
+                            userList.AddUser(user);
+                        }
+                    }
+                }
+            }
+        }
+
+        public void InsertUser(User user)
+        {
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                string sql = @"INSERT INTO Users (UserID, Username, Email, Password, UserRole)
+                           VALUES (@UserID, @Username, @Email, @Password, @UserRole)";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", user.UserID);
+                    cmd.Parameters.AddWithValue("@Username", user.Username);
+                    cmd.Parameters.AddWithValue("@Email", user.Email);
+                    cmd.Parameters.AddWithValue("@Password", user.Password);
+                    cmd.Parameters.AddWithValue("@UserRole", user.UserRole);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void UpdateUser(User user)
+        {
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                string sql = @"UPDATE Users
+                           SET Username = @Username,
+                               Email = @Email,
+                               Password = @Password,
+                               UserRole = @UserRole
+                           WHERE UserID = @UserID";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", user.UserID);
+                    cmd.Parameters.AddWithValue("@Username", user.Username);
+                    cmd.Parameters.AddWithValue("@Email", user.Email);
+                    cmd.Parameters.AddWithValue("@Password", user.Password);
+                    cmd.Parameters.AddWithValue("@UserRole", user.UserRole);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        public void DeleteUser(int userId)
+        {
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                string sql = "DELETE FROM Users WHERE UserID = @UserID";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
         }
     }
 
@@ -110,6 +301,7 @@ namespace WembleyManagementSystem
     public class EventBinaryTree
     {
         private EventNode root;
+        public int currentMaxEventID = 0; // To keep track of the current maximum event ID for assigning new IDs
 
         public EventBinaryTree()
         {
@@ -128,8 +320,15 @@ namespace WembleyManagementSystem
             if (root == null)
             {
                 root = new EventNode(wembleyEvent);
+                currentMaxEventID = wembleyEvent.EventID;
                 return;
             }
+
+            if (wembleyEvent.EventID > currentMaxEventID)
+            {
+                currentMaxEventID = wembleyEvent.EventID;
+            }
+
 
             InsertRec(root, wembleyEvent);
 
@@ -247,7 +446,7 @@ namespace WembleyManagementSystem
                 }
                 else
                 {
-                    return new EventNode(new WembleyEvent(-1));
+                    return null;
                 }
             }
             else
@@ -265,7 +464,7 @@ namespace WembleyManagementSystem
                 }
                 else
                 {
-                    return new EventNode(new WembleyEvent(-1));
+                    return null;
                 }
             }
 
@@ -389,40 +588,73 @@ namespace WembleyManagementSystem
         public int Attendance { get; set; } // Number of attendees expected or recorded for the event
         public int EventPrice { get; set; } // Price of the event ticket in GBP
 
-        public WembleyEvent(int EventID /* just for test need to add all later */)
+        public WembleyEvent(int EventID, string eventName, DateTime eventDate, string eventType, int attendance, int eventPrice)
         {
             this.EventID = EventID;
+            this.EventName = eventName;
+            this.EventDate = eventDate;
+            this.EventType = eventType;
+            this.Attendance = attendance;
+            this.EventPrice = eventPrice;
         }
     }
 
     public class EventManagementSystem
     {
-        private EventBinaryTree tree;
+        //public for test should be private
+        public EventBinaryTree tree;
+        private DatabaseManager database;
 
         public EventManagementSystem()
         {
             tree = new EventBinaryTree();
+            database = new DatabaseManager();
+
+            LoadEventsFromDatabase();
+        }
+
+        public void LoadEventsFromDatabase()
+        {
+            database.LoadEventsIntoTree(tree);
         }
 
         public void AddEvent(WembleyEvent wembleyEvent)
         {
+            wembleyEvent.EventID = tree.currentMaxEventID + 1; // Assign a new unique ID to the event
+
             tree.Insert(wembleyEvent);
+            database.InsertEvent(wembleyEvent);
         }
 
         public void UpdateEvent(int eventId, WembleyEvent updatedEvent)
         {
-            var node = tree.FindEvent(eventId);
-            if (node != null) node.Event.Attendance = updatedEvent.Attendance;
+            EventNode node = tree.FindEvent(eventId);
+            if (node != null)
+            {
+                node.Event.EventName = updatedEvent.EventName;
+                node.Event.EventDate = updatedEvent.EventDate;
+                node.Event.EventType = updatedEvent.EventType;
+                node.Event.Attendance = updatedEvent.Attendance;
+                node.Event.EventPrice = updatedEvent.EventPrice;
+
+                database.UpdateEvent(node.Event);
+            }
         }
 
         public void DeleteEvent(int eventId)
         {
-            tree.Delete(tree.FindEvent(eventId).Event);
+            EventNode node = tree.FindEvent(eventId);
+            if (node != null)
+            {
+                tree.Delete(node.Event);
+                database.DeleteEvent(eventId);
+            }
         }
 
         public WembleyEvent GetEvent(int eventId)
         {
-            return tree.FindEvent(eventId).Event;
+            EventNode node = tree.FindEvent(eventId);
+            return node != null ? node.Event : null;
         }
 
         public WembleyEvent[] GetAllEvents()
@@ -450,6 +682,7 @@ namespace WembleyManagementSystem
     public class UserLinkedList
     {
         private UserNode root;
+        private int currentMaxUserID = 0; // To keep track of the current maximum user ID for assigning new IDs
 
         public UserLinkedList()
         {
@@ -463,9 +696,13 @@ namespace WembleyManagementSystem
             if (root == null)
             {
                 root = newNode;
+                currentMaxUserID = user.UserID;
             }
             else
             {
+                user.UserID = currentMaxUserID + 1; // Assign a new unique ID to the user
+                currentMaxUserID = user.UserID;
+
                 //traverse to the end of the list and add the new node
                 UserNode current = root;
                 while (current.Next != null)
@@ -564,30 +801,47 @@ namespace WembleyManagementSystem
         public string Email { get; set; } // Email address of the user
         public string Password { get; set; } // Password for user authentication
         public string UserRole { get; set; } // Admin, Client, Bussiness
+
+        public User()
+        {
+
+        }
     }
 
     public class UserManagementSystem
     {
         private UserLinkedList userList;
+        private DatabaseManager database;
 
         public UserManagementSystem()
         {
             userList = new UserLinkedList();
+            database = new DatabaseManager();
+
+            LoadFromDatabase();
+        }
+
+        public void LoadFromDatabase()
+        {
+            database.LoadUsersIntoList(userList);
         }
 
         public void RegisterUser(User user)
         {
             userList.AddUser(user);
+            database.InsertUser(user);
         }
 
         public void UpdateUser(int userId, User updatedUser)
         {
             userList.UpdateUser(userId, updatedUser);
+            database.UpdateUser(updatedUser);
         }
 
         public void DeleteUser(int userId)
         {
             userList.DeleteUser(userId);
+            database.DeleteUser(userId);
         }
 
         public User GetUser(int userId)
@@ -618,6 +872,7 @@ namespace WembleyManagementSystem
         {
             //Wembley Event Binary tree test
 
+            /*
             EventBinaryTree eventBinaryTree = new EventBinaryTree();
 
             for (int i = 0; i < 10; ++i)
@@ -655,14 +910,49 @@ namespace WembleyManagementSystem
 
             Console.WriteLine("Get User with ID 5: " + userManagementSystem.GetUser(5)?.Username);
 
+            Console.ReadLine();
+
             userManagementSystem.PrintAllUsers();
+            */
+
+            //Load events from database
+            EventManagementSystem eventManagementSystem = new EventManagementSystem();
+
+            //TEST DO NOT UNCOMMENT except you want to test the db functions
+            //EventID is auto generated so we can just set it to 0 when creating a new event and the system will assign a new unique ID to it
+
+            //WembleyEvent newEvent = new WembleyEvent(0,"Test Event", DateTime.Now, "Football", 0, 50);
+            //eventManagementSystem.AddEvent(newEvent);
+
+            //eventManagementSystem.DeleteEvent(104);
+
+            //eventManagementSystem.UpdateEvent(103, new WembleyEvent(0,"Updated Test Event", DateTime.Now, "Football", 0, 50));
+
+            eventManagementSystem.tree.Print();
+
+            UserManagementSystem userManagementSystem = new UserManagementSystem();
+
+            User newUser = new User()
+            {
+                Username = "TestUser",
+                Email = "test@gmail.com",
+                Password = "password123",
+                UserRole = "Client"
+            };
+
+            //userManagementSystem.RegisterUser(newUser);
+
+            newUser.Username = "UpdatedTestUser";
+            //userManagementSystem.UpdateUser(2, newUser);
+
+            userManagementSystem.DeleteUser(5);
 
             //UI
-            ApplicationConfiguration.Initialize();
+            //Changed after reduce our .NET version
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
 
             EventManagementSystem system = new EventManagementSystem();
-            system.AddEvent(new WembleyEvent(101) { EventName = "Tottenham vs Arsenal", Attendance = 50000 });
-            system.AddEvent(new WembleyEvent(102) { EventName = "Coldplay Concert", Attendance = 80000 });
 
             Application.Run(new ClientForm(system));
 
