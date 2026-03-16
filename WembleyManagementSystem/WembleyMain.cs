@@ -9,12 +9,25 @@ namespace WembleyManagementSystem
 {
     public class DatabaseManager
     {
-        private string connectionString =
-        "Server=tcp:YOURSERVER.database.windows.net,1433;Initial Catalog=WembleyManagementDB;User ID=USERNAME;Password=PASSWORD;Encrypt=True;";
-
-        public SqlConnection GetConnection()
-        {
-            return new SqlConnection(connectionString);
+class Program {
+  static void Main() {
+    var password = "Wembley123.";
+    var cs = $"Server=wembley-management-db.cnsmqce46enu.eu-west-2.rds.amazonaws.com,1433;Database=<wembley-management-sql>;User ID=admin;Password=Wembley123.;Encrypt=True;TrustServerCertificate=True;";
+    SqlConnection conn = null;
+    try {
+      conn = new SqlConnection(cs);
+      conn.Open();
+      using var cmd = new SqlCommand("SELECT @@VERSION", conn);
+      Console.WriteLine(cmd.ExecuteScalar());
+    } catch (Exception ex) {
+      Console.WriteLine($"Database error: {ex.Message}");
+      throw;
+    } finally {
+      conn?.Close();
+      conn?.Dispose();
+    }
+  }
+}
         }
 public void AddEvent(string name, DateTime date, string location)
 {
