@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(find \"C:\\\\Users\\\\Muham\\\\New folder \\(4\\)\\\\WembleyManagementSystem\" -name \"*.cs\" -not -path \"*/obj/*\" -not -path \"*/bin/*\")",
-      "Bash(ls -la \"C:\\\\Users\\\\Muham\\\\New folder \\(4\\)\\\\WembleyManagementSystem\")",
-      "Bash(find \"C:\\\\Users\\\\Muham\\\\New folder \\(4\\)\\\\WembleyManagementSystem\" -maxdepth 2 -type d)"
-    ]
-  }
-}
