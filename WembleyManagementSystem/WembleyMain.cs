@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Windows.Forms;
+using user;
 
 namespace WembleyManagementSystem
 {
@@ -1011,8 +1012,7 @@ namespace WembleyManagementSystem
 
             EventManagementSystem system = new EventManagementSystem();
 
-            Application.Run(new ClientForm(system));
-
+            Application.Run(new LoginForm(userManagementSystem, system));
         }
     }
 }

@@ -159,9 +159,10 @@ namespace user
             //Open the form based on the role
             switch (loggedinUser.UserRole)
             {
+                case "Admin":
                 case "Business":
-                    //Waiting for admin/business form
-                    MessageBox.Show("Form not ready yet ");
+                    // Open the shared Admin/Business dashboard
+                    new AdminBusinessForm(_eventSystem, _userSystem, loggedinUser).Show();
                     break;
 
                 case "Client":

@@ -5,7 +5,7 @@ using WembleyManagementSystem;
 
 namespace WembleyManagementSystem
 {
-    public class BusinessRegisterForm : Form
+    public partial class RegisterFormBusiness : Form
     {
         private TextBox txtUsername;
         private TextBox txtBusinessName;
@@ -23,7 +23,7 @@ namespace WembleyManagementSystem
 
         private readonly UserManagementSystem _userSystem;
 
-        public BusinessRegisterForm(UserManagementSystem userSystem)
+        public RegisterFormBusiness(UserManagementSystem userSystem)
         {
             _userSystem = userSystem;
             InitializeComponents();
@@ -241,21 +241,9 @@ namespace WembleyManagementSystem
         {
             this.Close();
         }
+        
 
-        private void InitializeComponent()
-        {
-            this.SuspendLayout();
-            // 
-            // BusinessRegisterForm
-            // 
-            this.ClientSize = new System.Drawing.Size(284, 261);
-            this.Name = "BusinessRegisterForm";
-            this.Load += new System.EventHandler(this.BusinessRegisterForm_Load);
-            this.ResumeLayout(false);
-
-        }
-
-        private void BusinessRegisterForm_Load(object sender, EventArgs e)
+        private void RegisterFormBusiness_Load(object sender, EventArgs e)
         {
 
         }
