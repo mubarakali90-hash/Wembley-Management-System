@@ -1,9 +1,14 @@
 using System;
 using System.Drawing;
+using System.Security.Cryptography.X509Certificates;
 using System.Windows.Forms;
+using WembleyManagementSystem;
+
+
 
 namespace user
 {
+
     public class LoginForm : Form
     {
         private TextBox txtUsername;
@@ -14,10 +19,19 @@ namespace user
         private Label lblPassword;
         private Label lblTitle;
 
-        public LoginForm()
+        private readonly UserManagementSystem _userSystem;
+        private readonly EventManagementSystem _eventSystem;
+
+        //UserManagementSystem to use the method FindByCredentials, EventManagmentSystem to open the ClientForm
+        public LoginForm(UserManagementSystem userSystem, EventManagementSystem eventSystem)
         {
+            _userSystem = userSystem;
+            _eventSystem = eventSystem;
             InitializeComponents();
         }
+
+        //Property User logged
+        public User loggedinUser { get; private set; }
 
         private void InitializeComponents()
         {
@@ -99,7 +113,7 @@ namespace user
                 Cursor = Cursors.Hand
             };
             btnRegister.FlatAppearance.BorderColor = Color.FromArgb(0, 120, 215);
-            btnRegister.Click += BtnRegister_Click;
+            //btnRegister.Click += BtnRegister_Click;
 
             // Add controls to form
             this.Controls.Add(lblTitle);
@@ -123,20 +137,55 @@ namespace user
                 return;
             }
 
-            MessageBox.Show($"Login successful!\nWelcome, {username}!", "Success",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+  
+
+        //Search in the list to match username and password
+
+         loggedinUser = _userSystem.FindByCredentials(username, password);
+
+            if (loggedinUser == null)
+            {
+                MessageBox.Show("Invalid username or password.", "Login Failed" , MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtPassword.Clear();
+                return;
+            }
+
+            MessageBox.Show($"Welcome back, {loggedinUser.Username}!", "Login Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
             // Clear fields after login
             txtUsername.Clear();
             txtPassword.Clear();
+
+            //Open the form based on the role
+            switch (loggedinUser.UserRole)
+            {
+                case "Business":
+                    //Waiting for admin/business form
+                    MessageBox.Show("Form not ready yet ");
+                    break;
+
+                case "Client":
+                default:
+                    new ClientForm(_eventSystem, loggedinUser).Show();
+                    break;
+            }
         }
 
-        private void BtnRegister_Click(object sender, EventArgs e)
+        private void InitializeComponent()
         {
-            // Open the registration form
-            RegisterForm registerForm = new RegisterForm();
-            registerForm.Show();
-            this.Hide();
+            this.SuspendLayout();
+            // 
+            // LoginForm
+            // 
+            this.ClientSize = new System.Drawing.Size(284, 261);
+            this.Name = "LoginForm";
+            this.Load += new System.EventHandler(this.LoginForm_Load);
+            this.ResumeLayout(false);
+
+        }
+
+        private void LoginForm_Load(object sender, EventArgs e)
+        {
 
         }
     }

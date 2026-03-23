@@ -26,25 +26,36 @@ namespace WembleyManagementSystem
             };
             this.Controls.Add(msg);
         }
+
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+            // 
+            // PurchaseConfirmationForm
+            // 
+            this.ClientSize = new System.Drawing.Size(284, 261);
+            this.Name = "PurchaseConfirmationForm";
+            this.Load += new System.EventHandler(this.PurchaseConfirmationForm_Load);
+            this.ResumeLayout(false);
+
+        }
+
+        private void PurchaseConfirmationForm_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 
     public class ClientForm : Form
     {
         private DataGridView eventGrid = new DataGridView();
         private EventManagementSystem _system;
+        private User _loggedInUser;
 
-        //tracks who is logged in, null means no one is logged in
-        private string _loggedInUsername = null;
-
-        //top panel controls for the login/logout bar
-        private Panel topPanel = new Panel();
-        private Button btnLogin = new Button();
-        private Label lblUsername = new Label();
-        private Button btnLogout = new Button();
-
-        public ClientForm(EventManagementSystem system)
+        public ClientForm(EventManagementSystem system, User loggedinUser)
         {
             _system = system;
+            _loggedInUser = loggedinUser;
             this.Text = "Wembley Events - Client Portal";
             this.Size = new Size(800, 490);
 
@@ -954,6 +965,43 @@ namespace WembleyManagementSystem
             {
                 Console.WriteLine($"UserID: {userNode.User.UserID}, Username: {userNode.User.Username}, Email: {userNode.User.Email}, Role: {userNode.User.UserRole}");
             }
+        }
+
+        //Method to match username and password
+        //Returns null if no match is found
+
+        public User FindByCredentials(string username, string password)
+        {
+            UserNode[] users = userList.GetAllUsers();
+            //Check every user in the linked list to find a match
+            foreach (var node in users)
+            {
+                if (string.Equals(node.User.Username, username, StringComparison.OrdinalIgnoreCase) && node.User.Password == password)
+                {
+                    return node.User;
+                }
+            }
+            //No match found
+            return null;
+        }
+
+        //Method to check if the username already exists
+        //Return true if it exists, false if does not exist
+
+        public bool UsernameExists(string username)
+        {
+
+            UserNode[] users = userList.GetAllUsers();
+
+            foreach (var node in users)
+            {
+
+                if (string.Equals(node.User.Username, username, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 

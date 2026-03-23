@@ -1,10 +1,11 @@
 using System;
 using System.Drawing;
 using System.Windows.Forms;
+using WembleyManagementSystem;
 
 namespace user
 {
-    public class RegisterForm : Form
+    public class RegisterFormClient : Form
     {
         private TextBox txtUsername;
         private TextBox txtEmail;
@@ -18,8 +19,12 @@ namespace user
         private Label lblConfirmPassword;
         private Label lblTitle;
 
-        public RegisterForm()
+
+        private readonly UserManagementSystem _userSystem;
+
+        public RegisterFormClient(UserManagementSystem userSystem)
         {
+            _userSystem = userSystem;
             InitializeComponents();
         }
 
@@ -202,17 +207,66 @@ namespace user
                 return;
             }
 
-            //Save on json Text page
-            MessageBox.Show($"Account created successfully!\nUsername: {username}\nEmail: {email}", 
-                "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            
-            // Close the registration form
-            this.Close();
+            if (_userSystem.UsernameExists(username))
+            {
+                MessageBox.Show("That username is already taken. Please choose another.",
+                    "Registration Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            //If all validation a successful
+            //Create new user
+            User newUser = new User
+            {
+                UserID = 0,
+                Username = username,
+                Password = password,
+                Email = email,
+                UserRole = "Client"
+            };
+
+            //Add user in the linked list and DB
+            try
+            {
+                _userSystem.RegisterUser(newUser);
+                {
+
+                    MessageBox.Show($"Account created successfully!\nUsername: {username}",
+                  "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    this.Close();
+                }
+            }
+
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Registration failed:\n{ex.Message}", "Database Error",
+                   MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
         }
 
         private void BtnCancel_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+            // 
+            // RegisterFormClient
+            // 
+            this.ClientSize = new System.Drawing.Size(284, 261);
+            this.Name = "RegisterFormClient";
+            this.Load += new System.EventHandler(this.RegisterFormClient_Load);
+            this.ResumeLayout(false);
+
+        }
+
+        private void RegisterFormClient_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }
