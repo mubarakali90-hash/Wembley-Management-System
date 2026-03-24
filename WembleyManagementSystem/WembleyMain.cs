@@ -52,6 +52,15 @@ namespace WembleyManagementSystem
         private EventManagementSystem _system;
         private User _loggedInUser;
 
+        //tracks who is logged in, null means no one is logged in
+        private string _loggedInUsername = null;
+
+        //top panel controls for the login/logout bar
+        private Panel topPanel = new Panel();
+        private Button btnLogin = new Button();
+        private Label lblUsername = new Label();
+        private Button btnLogout = new Button();
+
         public ClientForm(EventManagementSystem system, User loggedinUser)
         {
             _system = system;
