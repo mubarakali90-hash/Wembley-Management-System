@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using WembleyManagementSystem;
 
-namespace user
+namespace ManageUser
 {
     public class ManageUsersForm : Form
     {

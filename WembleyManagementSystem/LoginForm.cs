@@ -6,7 +6,7 @@ using WembleyManagementSystem;
 
 
 
-namespace user
+namespace LoginUser
 {
 
     public class LoginForm : Form
@@ -113,7 +113,7 @@ namespace user
                 Cursor = Cursors.Hand
             };
             btnRegister.FlatAppearance.BorderColor = Color.FromArgb(0, 120, 215);
-            //btnRegister.Click += BtnRegister_Click;
+            btnRegister.Click += BtnRegister_Click;
 
             // Add controls to form
             this.Controls.Add(lblTitle);
@@ -137,15 +137,15 @@ namespace user
                 return;
             }
 
-  
 
-        //Search in the list to match username and password
 
-         loggedinUser = _userSystem.FindByCredentials(username, password);
+            //Search in the list to match username and password
+
+            loggedinUser = _userSystem.FindByCredentials(username, password);
 
             if (loggedinUser == null)
             {
-                MessageBox.Show("Invalid username or password.", "Login Failed" , MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Invalid username or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 txtPassword.Clear();
                 return;
             }
@@ -162,7 +162,7 @@ namespace user
                 case "Admin":
                 case "Business":
                     // Open the shared Admin/Business dashboard
-                    new AdminBusinessForm(_eventSystem, _userSystem, loggedinUser).Show();
+                    new AdminUser.AdminBusinessForm(_eventSystem, _userSystem, loggedinUser).Show();
                     break;
 
                 case "Client":
@@ -170,6 +170,11 @@ namespace user
                     new ClientForm(_eventSystem, loggedinUser).Show();
                     break;
             }
+        }
+
+        private void BtnRegister_Click(object sender, EventArgs e)
+        {
+            //TODO
         }
 
         private void InitializeComponent()

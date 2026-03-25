@@ -4,7 +4,7 @@ using System.Linq;
 using System.Windows.Forms;
 using WembleyManagementSystem;
 
-namespace user
+namespace AdminUser
 {
     public class AdminBusinessForm : Form
     {
@@ -134,7 +134,7 @@ namespace user
 
         private void BtnManageUsers_Click(object sender, EventArgs e)
         {
-            ManageUsersForm usersForm = new ManageUsersForm(_userSystem);
+            ManageUser.ManageUsersForm usersForm = new ManageUser.ManageUsersForm(_userSystem);
             usersForm.ShowDialog();
         }
     }

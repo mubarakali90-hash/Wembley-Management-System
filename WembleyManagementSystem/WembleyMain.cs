@@ -4,7 +4,6 @@ using System.Configuration;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Windows.Forms;
-using user;
 
 namespace WembleyManagementSystem
 {
@@ -125,11 +124,11 @@ namespace WembleyManagementSystem
         private void BtnLogin_Click(object sender, EventArgs e)
         {
             //opens the login form and waits for the result
-            var loginForm = new user.LoginForm();
+            var loginForm = new LoginUser.LoginForm(new UserManagementSystem(), new EventManagementSystem());
             if (loginForm.ShowDialog(this) == DialogResult.OK)
             {
                 //saves the logged in username and updates the UI
-                _loggedInUsername = loginForm.LoggedInUsername;
+                _loggedInUsername = loginForm.loggedinUser.Username;
                 UpdateLoginUI();
             }
         }
@@ -913,7 +912,7 @@ namespace WembleyManagementSystem
         public string Username { get; set; } // Name of the user
         public string Email { get; set; } // Email address of the user
         public string Password { get; set; } // Password for user authentication
-        public string UserRole { get; set; } // Admin, Client, Bussiness
+        public string UserRole { get; set; } // Admin, Client, Unverified_Business, Verified_Business
 
         public User()
         {
@@ -1095,7 +1094,7 @@ namespace WembleyManagementSystem
             newUser.Username = "UpdatedTestUser";
             //userManagementSystem.UpdateUser(2, newUser);
 
-            userManagementSystem.DeleteUser(5);
+            //userManagementSystem.DeleteUser(5);
 
             //UI
             //Changed after reduce our .NET version
@@ -1104,7 +1103,17 @@ namespace WembleyManagementSystem
 
             EventManagementSystem system = new EventManagementSystem();
 
-            Application.Run(new LoginForm(userManagementSystem, system));
+            //Login Form
+            //Application.Run(new LoginUser.LoginForm(userManagementSystem, system));
+
+            //Register Form
+            //Application.Run(new RegisterUser.RegisterFormClient(userManagementSystem));
+
+            //Client Form
+            //Application.Run(new ClientForm(system, new User() { UserRole = "Client" }));
+
+            //Admin Form
+            //Application.Run(new AdminUser.AdminBusinessForm(system, userManagementSystem, new User() { UserRole = "Admin" }));
         }
     }
 }
