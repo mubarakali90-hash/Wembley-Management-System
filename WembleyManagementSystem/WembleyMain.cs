@@ -49,7 +49,7 @@ namespace WembleyManagementSystem
     {
         private DataGridView eventGrid = new DataGridView();
         private EventManagementSystem _system;
-        private User _loggedInUser;
+        private UserManagementSystem _userSystem;
 
         //tracks who is logged in, null means no one is logged in
         private string _loggedInUsername = null;
@@ -60,10 +60,11 @@ namespace WembleyManagementSystem
         private Label lblUsername = new Label();
         private Button btnLogout = new Button();
 
-        public ClientForm(EventManagementSystem system, User loggedinUser)
+        public ClientForm(EventManagementSystem system, UserManagementSystem userSystem, string loggedInUsername = null)
         {
             _system = system;
-            _loggedInUser = loggedinUser;
+            _userSystem = userSystem;
+            _loggedInUsername = loggedInUsername;
             this.Text = "Wembley Events - Client Portal";
             this.Size = new Size(800, 490);
 
@@ -119,12 +120,15 @@ namespace WembleyManagementSystem
             this.Controls.Add(topPanel);
 
             LoadEvents();
+
+            //applies the correct login/logout UI state on startup
+            UpdateLoginUI();
         }
 
         private void BtnLogin_Click(object sender, EventArgs e)
         {
-            //opens the login form and waits for the result
-            var loginForm = new LoginUser.LoginForm(new UserManagementSystem(), new EventManagementSystem());
+            //opens the login form as a dialog and waits for the result
+            var loginForm = new LoginUser.LoginForm(_userSystem, _system);
             if (loginForm.ShowDialog(this) == DialogResult.OK)
             {
                 //saves the logged in username and updates the UI
@@ -152,9 +156,8 @@ namespace WembleyManagementSystem
             lblUsername.Visible = loggedIn;
             btnLogout.Visible = loggedIn;
 
-            //shows the buy column only when a user is logged in
-            if (eventGrid.Columns.Contains("BuyButton"))
-                eventGrid.Columns["BuyButton"].Visible = loggedIn;
+            //refreshes the grid to reflect login state
+            eventGrid.Refresh();
         }
 
         private void LoadEvents()
@@ -163,7 +166,7 @@ namespace WembleyManagementSystem
             eventGrid.DataSource = null;
             eventGrid.DataSource = _system.GetAllEvents();
 
-            //adds the buy button hidden by default, only visible after login
+            //adds the buy button, always visible
             if (!eventGrid.Columns.Contains("BuyButton"))
             {
                 var buyCol = new DataGridViewButtonColumn()
@@ -171,8 +174,7 @@ namespace WembleyManagementSystem
                     Name = "BuyButton",
                     HeaderText = "Action",
                     Text = "Buy",
-                    UseColumnTextForButtonValue = true,
-                    Visible = false
+                    UseColumnTextForButtonValue = true
                 };
                 eventGrid.Columns.Add(buyCol);
             }
@@ -181,6 +183,21 @@ namespace WembleyManagementSystem
             {
                 if (e.ColumnIndex == eventGrid.Columns["BuyButton"].Index && e.RowIndex >= 0)
                 {
+                    //if not logged in, open login form first
+                    if (_loggedInUsername == null)
+                    {
+                        var loginForm = new LoginUser.LoginForm(_userSystem, _system);
+                        if (loginForm.ShowDialog(this) == DialogResult.OK)
+                        {
+                            _loggedInUsername = loginForm.loggedinUser.Username;
+                            UpdateLoginUI();
+                        }
+                        else
+                        {
+                            return; //login cancelled, skip purchase
+                        }
+                    }
+
                     var selectedEvent = (WembleyEvent)eventGrid.Rows[e.RowIndex].DataBoundItem;
 
                     //increase the attendance for the event by 1
