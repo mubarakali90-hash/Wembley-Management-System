@@ -49,28 +49,13 @@ namespace WembleyManagementSystem
 
             // Username
             lblUsername = new Label { 
-                Text = "Username:", Location = new Point(50, 80),
+                Text = "Business Name:", Location = new Point(50, 80),
                 Size = new Size(90, 20) };
 
             txtUsername = new TextBox
             { 
                 Location = new Point(150, 78),
                 Size = new Size(190, 25), 
-                Font = new Font("Segoe UI", 10) 
-            };
-
-            // Business Name
-
-            lblBusinessName = new Label 
-            {
-                Text = "Business:", Location = new Point(50, 120),
-                Size = new Size(90, 20) 
-            };
-
-            txtBusinessName = new TextBox 
-            {
-                Location = new Point(150, 118),
-                Size = new Size(190, 25),
                 Font = new Font("Segoe UI", 10) 
             };
 
@@ -147,8 +132,6 @@ namespace WembleyManagementSystem
             this.Controls.Add(lblTitle);
             this.Controls.Add(lblUsername);
             this.Controls.Add(txtUsername);
-            this.Controls.Add(lblBusinessName);
-            this.Controls.Add(txtBusinessName);
             this.Controls.Add(lblEmail);
             this.Controls.Add(txtEmail);
             this.Controls.Add(lblPassword);
@@ -161,6 +144,8 @@ namespace WembleyManagementSystem
 
         private void BtnRegister_Click(object sender, EventArgs e)
         {
+
+            // Getting all the  input values
             string username = txtUsername.Text.Trim();
             string businessName = txtBusinessName.Text.Trim();
             string email = txtEmail.Text.Trim();

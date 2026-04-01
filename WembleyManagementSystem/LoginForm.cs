@@ -180,7 +180,73 @@ namespace LoginUser
 
         private void BtnRegister_Click(object sender, EventArgs e)
         {
-            //TODO
+            //Open a form to let the user choose the type of account to create
+
+            Form choiceForm = new Form
+            {
+                Text = "Choose Account Type",
+                Size = new Size(350, 200),
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false
+            };
+
+            Label Question = new Label
+            {
+                Text = "What type of account do you want to create?",
+                Location = new Point(30, 20),
+                Size = new Size(290, 20),
+                Font = new Font("Segoe UI", 10),
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+
+            //CLient Button
+            Button clientButton = new Button
+            {
+                Text = "Client Account",
+                Location = new Point(50, 70),
+                Size = new Size(100, 30),
+                BackColor = Color.FromArgb(0, 120, 215),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9),
+                Cursor = Cursors.Hand
+            };
+
+            //Business Button
+            Button businessButton = new Button
+            {
+                Text = "Business Account",
+                Location = new Point(180, 70),
+                Size = new Size(100, 30),
+                BackColor = Color.FromArgb(0, 120, 215),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9),
+                Cursor = Cursors.Hand
+            };
+
+            //Open client registration form
+            clientButton.Click += (s, args) =>
+            {
+                choiceForm.Close();
+                RegisterUser.RegisterFormClient registerFormClient = new RegisterUser.RegisterFormClient(_userSystem);
+                registerFormClient.ShowDialog();
+                
+            };
+
+            //Open business registration form
+            businessButton.Click += (s, args) =>
+            {
+                choiceForm.Close();
+                RegisterFormBusiness registerFormBusiness = new RegisterFormBusiness(_userSystem);
+                registerFormBusiness.ShowDialog();
+            };
+
+            choiceForm.Controls.Add(Question);
+            choiceForm.Controls.Add(clientButton);
+            choiceForm.Controls.Add(businessButton);
+            choiceForm.ShowDialog();
         }
 
         private void InitializeComponent()
