@@ -160,14 +160,20 @@ namespace LoginUser
             switch (loggedinUser.UserRole)
             {
                 case "Admin":
-                case "Business":
+                case "Verified_Business":
                     // Open the shared Admin/Business dashboard
                     new AdminUser.AdminBusinessForm(_eventSystem, _userSystem, loggedinUser).Show();
                     break;
 
+                case "Unverified_Business":
+                    // Block access and show a message
+                    MessageBox.Show("Your business account is pending verification by an Admin. You cannot access the dashboard yet.", 
+                        "Account Unverified", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    break;
+
                 case "Client":
                 default:
-                    new ClientForm(_eventSystem, loggedinUser).Show();
+                    new ClientForm(_eventSystem, _userSystem, loggedinUser.Username).Show();
                     break;
             }
         }

@@ -225,7 +225,7 @@ namespace WembleyManagementSystem
         {
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                string sql = "SELECT EventID, EventName, EventDate, EventType, Attendance, EventPrice FROM Events ORDER BY EventID";
+                string sql = "SELECT EventID, BusinessID, EventName, EventDate, EventType, Attendance, EventPrice FROM Events ORDER BY EventID";
 
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
@@ -235,7 +235,15 @@ namespace WembleyManagementSystem
                     {
                         while (reader.Read())
                         {
-                            WembleyEvent wembleyEvent = new WembleyEvent(reader.GetInt32(0), reader.GetString(1), reader.GetDateTime(2), reader.GetString(3), reader.GetInt32(4), reader.GetInt32(5));
+                            WembleyEvent wembleyEvent = new WembleyEvent(
+                                reader.GetInt32(0), // EventID
+                                reader.GetInt32(1), // BusinessID
+                                reader.GetString(2), // EventName
+                                reader.GetDateTime(3), // EventDate
+                                reader.GetString(4), // EventType
+                                reader.GetInt32(5), // Attendance
+                                reader.GetInt32(6)  // EventPrice
+                            );
 
                             //Insert the event into the binary tree
                             tree.Insert(wembleyEvent);
@@ -249,14 +257,16 @@ namespace WembleyManagementSystem
         {
             using (SqlConnection conn = new SqlConnection(connString))
             {
+
                 string sql = @"INSERT INTO Events
-                           (EventID, EventName, EventDate, EventType, Attendance, EventPrice)
+                           (EventID, BusinessID, EventName, EventDate, EventType, Attendance, EventPrice)
                            VALUES
-                           (@EventID, @EventName, @EventDate, @EventType, @Attendance, @EventPrice)";
+                           (@EventID, @BusinessID, @EventName, @EventDate, @EventType, @Attendance, @EventPrice)";
 
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@EventID", wembleyEvent.EventID);
+                    cmd.Parameters.AddWithValue("@BusinessID", wembleyEvent.BusinessID); // ADDED
                     cmd.Parameters.AddWithValue("@EventName", wembleyEvent.EventName);
                     cmd.Parameters.AddWithValue("@EventDate", wembleyEvent.EventDate);
                     cmd.Parameters.AddWithValue("@EventType", wembleyEvent.EventType);
@@ -273,8 +283,10 @@ namespace WembleyManagementSystem
         {
             using (SqlConnection conn = new SqlConnection(connString))
             {
+
                 string sql = @"UPDATE Events
-                           SET EventName = @EventName,
+                           SET BusinessID = @BusinessID,
+                               EventName = @EventName,
                                EventDate = @EventDate,
                                EventType = @EventType,
                                Attendance = @Attendance,
@@ -284,6 +296,7 @@ namespace WembleyManagementSystem
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@EventID", wembleyEvent.EventID);
+                    cmd.Parameters.AddWithValue("@BusinessID", wembleyEvent.BusinessID); // ADDED
                     cmd.Parameters.AddWithValue("@EventName", wembleyEvent.EventName);
                     cmd.Parameters.AddWithValue("@EventDate", wembleyEvent.EventDate);
                     cmd.Parameters.AddWithValue("@EventType", wembleyEvent.EventType);
@@ -711,15 +724,17 @@ namespace WembleyManagementSystem
     public class WembleyEvent
     {
         public int EventID { get; set; } // Unique identifier for the event
+        public int BusinessID { get; set; } // Tracks who owns the event
         public string EventName { get; set; } // Name of the event (Tottnham vs Arsenal)
         public DateTime EventDate { get; set; } // Date and time of the event
         public string EventType { get; set; } // Type of event (Football, Concert)
         public int Attendance { get; set; } // Number of attendees expected or recorded for the event
         public int EventPrice { get; set; } // Price of the event ticket in GBP
 
-        public WembleyEvent(int EventID, string eventName, DateTime eventDate, string eventType, int attendance, int eventPrice)
+        public WembleyEvent(int EventID, int businessID, string eventName, DateTime eventDate, string eventType, int attendance, int eventPrice)
         {
             this.EventID = EventID;
+            this.BusinessID = businessID;
             this.EventName = eventName;
             this.EventDate = eventDate;
             this.EventType = eventType;

@@ -20,6 +20,7 @@ namespace AdminUser
         private Button btnAddEvent;
         private Button btnDeleteEvent;
         private Button btnManageUsers;
+        private Button btnUpdateEvent;
 
         public AdminBusinessForm(EventManagementSystem eventSystem, UserManagementSystem userSystem, User currentUser)
         {
@@ -57,8 +58,12 @@ namespace AdminUser
             btnDeleteEvent = new Button { Text = "Delete Selected", Location = new Point(500, 60), Size = new Size(100, 30), BackColor = Color.LightCoral };
             btnDeleteEvent.Click += BtnDeleteEvent_Click;
 
+            // NEW: Update Event Button
+            btnUpdateEvent = new Button { Text = "Update Selected", Location = new Point(610, 60), Size = new Size(130, 30), BackColor = Color.LightYellow };
+            btnUpdateEvent.Click += BtnUpdateEvent_Click;
+
             // Admin Only Button
-            btnManageUsers = new Button { Text = "Manage Users", Location = new Point(620, 20), Size = new Size(120, 70), BackColor = Color.LightBlue };
+            btnManageUsers = new Button { Text = "Manage Users", Location = new Point(620, 20), Size = new Size(120, 35), BackColor = Color.LightBlue };
             btnManageUsers.Click += BtnManageUsers_Click;
             btnManageUsers.Visible = _currentUser.UserRole == "Admin"; // Hide if Business
 
@@ -72,6 +77,9 @@ namespace AdminUser
                 ReadOnly = true,
                 AllowUserToAddRows = false
             };
+            
+            // Auto-fill inputs when selecting an event to edit
+            dgvEvents.SelectionChanged += DgvEvents_SelectionChanged;
 
             // Add controls
             this.Controls.Add(lblName); this.Controls.Add(txtEventName);
@@ -79,25 +87,40 @@ namespace AdminUser
             this.Controls.Add(lblType); this.Controls.Add(cmbEventType);
             this.Controls.Add(lblPrice); this.Controls.Add(numPrice);
             this.Controls.Add(btnAddEvent); this.Controls.Add(btnDeleteEvent);
+            this.Controls.Add(btnUpdateEvent); // Add new button to form
             this.Controls.Add(btnManageUsers); this.Controls.Add(dgvEvents);
         }
-
+        
         private void LoadEvents()
         {
             var allEvents = _eventSystem.GetAllEvents();
             
             // Filter logic based on role
-            if (_currentUser.UserRole == "Business")
+            if (_currentUser.UserRole == "Verified_Business")
             {
-                // NOTE: This requires you to add 'BusinessID' to your WembleyEvent class!
-                // dgvEvents.DataSource = allEvents.Where(e => e != null && e.BusinessID == _currentUser.UserID).ToArray();
+                // Filters the array so businesses ONLY see their own events
+                dgvEvents.DataSource = allEvents.Where(e => e != null && e.BusinessID == _currentUser.UserID).ToArray();
             }
             else // Admin
             {
+                // Admins see everything
                 dgvEvents.DataSource = allEvents.Where(e => e != null).ToArray();
             }
         }
 
+        // Auto-fills the text boxes when you click an event in the grid
+        private void DgvEvents_SelectionChanged(object sender, EventArgs e)
+        {
+            if (dgvEvents.SelectedRows.Count > 0)
+            {
+                var selectedEvent = (WembleyEvent)dgvEvents.SelectedRows[0].DataBoundItem;
+                txtEventName.Text = selectedEvent.EventName;
+                dtpEventDate.Value = selectedEvent.EventDate;
+                cmbEventType.SelectedItem = selectedEvent.EventType;
+                numPrice.Value = selectedEvent.EventPrice;
+            }
+        }
+        
         private void BtnAddEvent_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(txtEventName.Text) || cmbEventType.SelectedItem == null)
@@ -107,7 +130,8 @@ namespace AdminUser
             }
 
             WembleyEvent newEvent = new WembleyEvent(
-                0, // ID auto-generates in your system
+                0, // EventID (auto-generates)
+                _currentUser.UserID, // BusinessID (The owner)
                 txtEventName.Text,
                 dtpEventDate.Value,
                 cmbEventType.SelectedItem.ToString(),
@@ -115,20 +139,58 @@ namespace AdminUser
                 (int)numPrice.Value
             );
 
-            // newEvent.BusinessID = _currentUser.UserID; // Don't forget to set this once you update the model!
+            newEvent.BusinessID = _currentUser.UserID;
 
             _eventSystem.AddEvent(newEvent);
             LoadEvents(); // Refresh Grid
             MessageBox.Show("Event Added Successfully!");
         }
 
+        // Handles the actual updating logic
+        private void BtnUpdateEvent_Click(object sender, EventArgs e)
+        {
+            if (dgvEvents.SelectedRows.Count > 0)
+            {
+                if (string.IsNullOrWhiteSpace(txtEventName.Text) || cmbEventType.SelectedItem == null)
+                {
+                    MessageBox.Show("Please fill all fields to update.");
+                    return;
+                }
+
+                var selectedEvent = (WembleyEvent)dgvEvents.SelectedRows[0].DataBoundItem;
+                
+                selectedEvent.EventName = txtEventName.Text;
+                selectedEvent.EventDate = dtpEventDate.Value;
+                selectedEvent.EventType = cmbEventType.SelectedItem.ToString();
+                selectedEvent.EventPrice = (int)numPrice.Value;
+
+                _eventSystem.UpdateEvent(selectedEvent.EventID, selectedEvent);
+                LoadEvents(); // Refresh Grid
+                MessageBox.Show("Event Updated Successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            else
+            {
+                MessageBox.Show("Please select an event from the list to update.");
+            }
+        }
+        
         private void BtnDeleteEvent_Click(object sender, EventArgs e)
         {
             if (dgvEvents.SelectedRows.Count > 0)
             {
-                var selectedEvent = (WembleyEvent)dgvEvents.SelectedRows[0].DataBoundItem;
-                _eventSystem.DeleteEvent(selectedEvent.EventID);
-                LoadEvents(); // Refresh Grid
+                // Ask for confirmation before deleting
+                DialogResult result = MessageBox.Show(
+                    "Are you sure you want to delete this event? This action cannot be undone.", 
+                    "Confirm Delete", 
+                    MessageBoxButtons.YesNo, 
+                    MessageBoxIcon.Warning);
+
+                if (result == DialogResult.Yes)
+                {
+                    var selectedEvent = (WembleyEvent)dgvEvents.SelectedRows[0].DataBoundItem;
+                    _eventSystem.DeleteEvent(selectedEvent.EventID);
+                    LoadEvents(); // Refresh Grid
+                }
             }
         }
 
