@@ -211,14 +211,14 @@ namespace WembleyManagementSystem
                 return;
             }
 
-            // Add user in the linked list and DB, role set to "Business"
+            // Add user in the linked list and DB, role set to "Unverified_Business"
             User newUser = new User
             {
                 UserID = 0,
                 Username = username,
                 Email = email,
                 Password = password,
-                UserRole = "Business"
+                UserRole = "Unverified_Business"
             };
 
             try
