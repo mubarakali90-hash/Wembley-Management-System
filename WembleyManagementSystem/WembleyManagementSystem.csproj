@@ -5,5 +5,8 @@
 		<UseWindowsForms>true</UseWindowsForms>
 		<Nullable>disable</Nullable>
 	</PropertyGroup>
+	<ItemGroup>
+	  <Reference Include="System.Configuration" />
+	</ItemGroup>
 </Project>
 
