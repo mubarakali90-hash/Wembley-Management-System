@@ -27,3 +27,5 @@ publish/
 *.temp
 
 # Resx files should be tracked if they are part of the project
+/WembleyManagementSystem/appsettings.json
+/WembleyManagementSystem/App.config
