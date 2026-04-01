@@ -3,7 +3,7 @@ using System.Drawing;
 using System.Windows.Forms;
 using WembleyManagementSystem;
 
-namespace user
+namespace RegisterUser
 {
     public class RegisterFormClient : Form
     {

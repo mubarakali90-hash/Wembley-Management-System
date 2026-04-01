@@ -4,7 +4,7 @@ using System.Windows.Forms;
 using WembleyManagementSystem;
 using System.Linq;
 
-namespace user
+namespace ManageUser
 {
     public class ManageUsersForm : Form
     {
