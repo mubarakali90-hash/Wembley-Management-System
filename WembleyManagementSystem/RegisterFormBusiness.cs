@@ -50,7 +50,7 @@ namespace WembleyManagementSystem
             // Username
             lblUsername = new Label { 
                 Text = "Business Name:", Location = new Point(50, 80),
-                Size = new Size(90, 20) };
+                Size = new Size(100, 20) };
 
             txtUsername = new TextBox
             { 
@@ -62,12 +62,12 @@ namespace WembleyManagementSystem
             // Email
             lblEmail = new Label 
             { 
-                Text = "Email:", Location = new Point(50, 160),
+                Text = "Email:", Location = new Point(50, 120),
                 Size = new Size(90, 20) 
             };
 
             txtEmail = new TextBox
-            { Location = new Point(150, 158),
+            { Location = new Point(150, 118),
                 Size = new Size(190, 25),
                 Font = new Font("Segoe UI", 10) 
             };
@@ -75,12 +75,12 @@ namespace WembleyManagementSystem
             // Password
             lblPassword = new Label 
             { 
-                Text = "Password:", Location = new Point(50, 200),
+                Text = "Password:", Location = new Point(50, 160),
                 Size = new Size(90, 20) 
             };
 
             txtPassword = new TextBox 
-            { Location = new Point(150, 198),
+            { Location = new Point(150, 158),
                 Size = new Size(190, 25), PasswordChar = '•',
                 Font = new Font("Segoe UI", 10) 
             };
@@ -88,13 +88,13 @@ namespace WembleyManagementSystem
             // Confirm Password
             lblConfirmPassword = new Label 
             { 
-                Text = "Confirm:", Location = new Point(50, 240),
+                Text = "Confirm:", Location = new Point(50, 200),
                 Size = new Size(90, 20) 
             };
 
             txtConfirmPassword = new TextBox 
             {
-                Location = new Point(150, 238), 
+                Location = new Point(150, 198), 
                 Size = new Size(190, 25), PasswordChar = '•',
                 Font = new Font("Segoe UI", 10)
             };
@@ -147,7 +147,6 @@ namespace WembleyManagementSystem
 
             // Getting all the  input values
             string username = txtUsername.Text.Trim();
-            string businessName = txtBusinessName.Text.Trim();
             string email = txtEmail.Text.Trim();
             string password = txtPassword.Text;
             string confirm = txtConfirmPassword.Text;
@@ -156,13 +155,6 @@ namespace WembleyManagementSystem
             if (string.IsNullOrEmpty(username))
             {
                 MessageBox.Show("Please enter a username.", "Validation Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (string.IsNullOrEmpty(businessName))
-            {
-                MessageBox.Show("Please enter your business name.", "Validation Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
@@ -210,7 +202,7 @@ namespace WembleyManagementSystem
             {
                 _userSystem.RegisterUser(newUser);
 
-                MessageBox.Show($"Business account created!\nUsername: {username}\nBusiness: {businessName}",
+                MessageBox.Show($"Business account created!\nUsername: {username}",
                     "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 this.Close();
