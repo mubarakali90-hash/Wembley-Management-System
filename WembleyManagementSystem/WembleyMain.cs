@@ -126,14 +126,11 @@ namespace WembleyManagementSystem
 
         private void BtnLogin_Click(object sender, EventArgs e)
         {
-            //opens the login form as a dialog and waits for the result
+            //opens the login form and closes the current client form
             var loginForm = new LoginUser.LoginForm(_userSystem, _system);
-            if (loginForm.ShowDialog(this) == DialogResult.OK)
-            {
-                //saves the logged in username and updates the UI
-                _loggedInUsername = loginForm.loggedinUser.Username;
-                UpdateLoginUI();
-            }
+            loginForm.Show();
+            Console.WriteLine("Closing ClientForm due to Login button click");
+            this.Close();
         }
 
         private void BtnLogout_Click(object sender, EventArgs e)
@@ -164,6 +161,13 @@ namespace WembleyManagementSystem
             //Shows all the event using the getAllEvents function
             eventGrid.DataSource = null;
             eventGrid.DataSource = _system.GetAllEvents();
+
+            // Hide internal ID columns - data is preserved but not shown to clients
+            if (eventGrid.Columns.Contains("EventID"))
+                eventGrid.Columns["EventID"].Visible = false;
+            if (eventGrid.Columns.Contains("BusinessID"))
+                eventGrid.Columns["BusinessID"].Visible = false;
+            Console.WriteLine("Hidden EventID and BusinessID columns from DataGridView");
 
             //adds the buy button, always visible
             if (!eventGrid.Columns.Contains("BuyButton"))
@@ -197,7 +201,16 @@ namespace WembleyManagementSystem
                         }
                     }
 
-                    var selectedEvent = (WembleyEvent)eventGrid.Rows[e.RowIndex].DataBoundItem;
+                    // DataBoundItem holds the full WembleyEvent object regardless of column visibility
+                    // Hidden columns (EventID, BusinessID) do not affect data access via DataBoundItem
+                    var selectedEvent = eventGrid.Rows[e.RowIndex].DataBoundItem as WembleyEvent;
+                    if (selectedEvent == null)
+                    {
+                        Console.WriteLine("Error: could not retrieve event data from selected row");
+                        return;
+                    }
+
+                    Console.WriteLine($"Buy clicked - EventID accessed from hidden column: {selectedEvent.EventID}");
 
                     //increase the attendance for the event by 1
                     selectedEvent.Attendance += 1;
@@ -209,6 +222,8 @@ namespace WembleyManagementSystem
                     new PurchaseConfirmationForm().ShowDialog();
 
                     eventGrid.Refresh();
+                    Console.WriteLine("Closing ClientForm due to Buy button click");
+                    this.Close();
                 }
             };
         }
