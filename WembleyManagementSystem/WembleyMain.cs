@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
 using System.Drawing;
@@ -127,14 +126,11 @@ namespace WembleyManagementSystem
 
         private void BtnLogin_Click(object sender, EventArgs e)
         {
-            //opens the login form as a dialog and waits for the result
+            //opens the login form and closes the current client form
             var loginForm = new LoginUser.LoginForm(_userSystem, _system);
-            if (loginForm.ShowDialog(this) == DialogResult.OK)
-            {
-                //saves the logged in username and updates the UI
-                _loggedInUsername = loginForm.loggedinUser.Username;
-                UpdateLoginUI();
-            }
+            loginForm.Show();
+            Console.WriteLine("Closing ClientForm due to Login button click");
+            this.Close();
         }
 
         private void BtnLogout_Click(object sender, EventArgs e)
@@ -165,6 +161,13 @@ namespace WembleyManagementSystem
             //Shows all the event using the getAllEvents function
             eventGrid.DataSource = null;
             eventGrid.DataSource = _system.GetAllEvents();
+
+            // Hide internal ID columns - data is preserved but not shown to clients
+            if (eventGrid.Columns.Contains("EventID"))
+                eventGrid.Columns["EventID"].Visible = false;
+            if (eventGrid.Columns.Contains("BusinessID"))
+                eventGrid.Columns["BusinessID"].Visible = false;
+            Console.WriteLine("Hidden EventID and BusinessID columns from DataGridView");
 
             //adds the buy button, always visible
             if (!eventGrid.Columns.Contains("BuyButton"))
@@ -198,7 +201,16 @@ namespace WembleyManagementSystem
                         }
                     }
 
-                    var selectedEvent = (WembleyEvent)eventGrid.Rows[e.RowIndex].DataBoundItem;
+                    // DataBoundItem holds the full WembleyEvent object regardless of column visibility
+                    // Hidden columns (EventID, BusinessID) do not affect data access via DataBoundItem
+                    var selectedEvent = eventGrid.Rows[e.RowIndex].DataBoundItem as WembleyEvent;
+                    if (selectedEvent == null)
+                    {
+                        Console.WriteLine("Error: could not retrieve event data from selected row");
+                        return;
+                    }
+
+                    Console.WriteLine($"Buy clicked - EventID accessed from hidden column: {selectedEvent.EventID}");
 
                     //increase the attendance for the event by 1
                     selectedEvent.Attendance += 1;
@@ -210,6 +222,8 @@ namespace WembleyManagementSystem
                     new PurchaseConfirmationForm().ShowDialog();
 
                     eventGrid.Refresh();
+                    Console.WriteLine("Closing ClientForm due to Buy button click");
+                    this.Close();
                 }
             };
         }
@@ -218,14 +232,14 @@ namespace WembleyManagementSystem
     //Database Part
     public class DatabaseManager
     {
-        private readonly string connString = "Server=tcp:wembley.database.windows.net,1433;Initial Catalog=free-sql-db-3371518;Persist Security Info=False;User ID=CloudSA5eb133b3;Password=mEWBW!hwAKM*G8FBsEokQAK;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;";
+        string connString = ConfigurationManager.ConnectionStrings["DefaultConnection"].ConnectionString;
 
         //Wembley Events
         public void LoadEventsIntoTree(EventBinaryTree tree)
         {
             using (SqlConnection conn = new SqlConnection(connString))
             {
-                string sql = "SELECT EventID, BusinessID, EventName, EventDate, EventType, Attendance, EventPrice FROM Events ORDER BY EventID";
+                string sql = "SELECT EventID, EventName, EventDate, EventType, Attendance, EventPrice, BusinessID FROM Events ORDER BY EventID";
 
                 using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
@@ -237,12 +251,12 @@ namespace WembleyManagementSystem
                         {
                             WembleyEvent wembleyEvent = new WembleyEvent(
                                 reader.GetInt32(0), // EventID
-                                reader.GetInt32(1), // BusinessID
-                                reader.GetString(2), // EventName
-                                reader.GetDateTime(3), // EventDate
-                                reader.GetString(4), // EventType
-                                reader.GetInt32(5), // Attendance
-                                reader.GetInt32(6)  // EventPrice
+                                reader.GetInt32(6), // BusinessID
+                                reader.GetString(1), // EventName
+                                reader.GetDateTime(2), // EventDate
+                                reader.GetString(3), // EventType
+                                reader.GetInt32(4), // Attendance
+                                reader.GetInt32(5)  // EventPrice
                             );
 
                             //Insert the event into the binary tree
@@ -591,7 +605,7 @@ namespace WembleyManagementSystem
                     return null;
                 }
             }
-            else
+            else if (currentRoot.GetEventID() > eventID)
             {
                 if (currentRoot.Left != null)
                 {
@@ -608,6 +622,10 @@ namespace WembleyManagementSystem
                 {
                     return null;
                 }
+            }
+            else
+            {
+                return currentRoot;
             }
 
         }
@@ -745,7 +763,7 @@ namespace WembleyManagementSystem
 
     public class EventManagementSystem
     {
-        //public for test should be private
+        //TODO: public for test should be private
         public EventBinaryTree tree;
         private DatabaseManager database;
 
@@ -786,7 +804,7 @@ namespace WembleyManagementSystem
         }
 
         public void DeleteEvent(int eventId)
-        {
+        {            
             EventNode node = tree.FindEvent(eventId);
             if (node != null)
             {
@@ -1105,7 +1123,7 @@ namespace WembleyManagementSystem
             //WembleyEvent newEvent = new WembleyEvent(0,"Test Event", DateTime.Now, "Football", 0, 50);
             //eventManagementSystem.AddEvent(newEvent);
 
-            //eventManagementSystem.DeleteEvent(104);
+            //eventManagementSystem.DeleteEvent(101);
 
             //eventManagementSystem.UpdateEvent(103, new WembleyEvent(0,"Updated Test Event", DateTime.Now, "Football", 0, 50));
 
@@ -1133,19 +1151,20 @@ namespace WembleyManagementSystem
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            EventManagementSystem system = new EventManagementSystem();
-
             //Login Form
-            //Application.Run(new LoginUser.LoginForm(userManagementSystem, system));
+            //Application.Run(new LoginUser.LoginForm(userManagementSystem, eventManagementSystem));
 
             //Register Form
             //Application.Run(new RegisterUser.RegisterFormClient(userManagementSystem));
 
+            //Business Register Form
+            //Application.Run(new RegisterFormBusiness(userManagementSystem));
+
             //Client Form
-            //Application.Run(new ClientForm(system, new User() { UserRole = "Client" }));
+            //Application.Run(new ClientForm(eventManagementSystem, userManagementSystem));
 
             //Admin Form
-            //Application.Run(new AdminUser.AdminBusinessForm(system, userManagementSystem, new User() { UserRole = "Admin" }));
+            Application.Run(new AdminUser.AdminBusinessForm(eventManagementSystem, userManagementSystem, new User() { UserRole = "Admin" }));
         }
     }
 }
