@@ -143,6 +143,24 @@ namespace AdminUser
             ManageUser.ManageUsersForm usersForm = new ManageUser.ManageUsersForm(_userSystem);
             usersForm.ShowDialog();
         }
+
+        private void InitializeComponent()
+        {
+            this.SuspendLayout();
+            // 
+            // AdminBusinessForm
+            // 
+            this.ClientSize = new System.Drawing.Size(284, 261);
+            this.Name = "AdminBusinessForm";
+            this.Load += new System.EventHandler(this.AdminBusinessForm_Load);
+            this.ResumeLayout(false);
+
+        }
+
+        private void AdminBusinessForm_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 
     // Form for adding events
