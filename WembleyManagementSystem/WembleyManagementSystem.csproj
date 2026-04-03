@@ -6,7 +6,11 @@
 		<Nullable>disable</Nullable>
 	</PropertyGroup>
 	<ItemGroup>
+	  <PackageReference Include="System.Text.Json" Version="10.0.5" />
+	</ItemGroup>
+	<ItemGroup>
 	  <Reference Include="System.Configuration" />
+	  <Reference Include="System.Net.Http" />
 	</ItemGroup>
 </Project>
 
