@@ -3,9 +3,79 @@ using System.Configuration;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Text.Json;
 
 namespace WembleyManagementSystem
 {
+
+    //Weather Api 
+    public class WeatherService
+    {
+        private static readonly HttpClient _httpClient = new HttpClient();
+
+        // Api Key Hardcoded for testing
+        private const string API_KEY = "617cf1f96800ece567d9af5cff8c364e";
+
+        // Wembley Stadium coordinates
+        private const double WEMBLEY_LAT = 51.556;
+        private const double WEMBLEY_LON = -0.2796;
+
+        //Get current weather for Wembley Stadium
+        //Result temperature, weather description and icon
+        public static async Task<WeatherResult> GetCurrentWeatherAsync()
+        {
+            try
+            {
+
+                string url = $"https://api.openweathermap.org/data/2.5/weather?lat={WEMBLEY_LAT}&lon={WEMBLEY_LON}&appid={API_KEY}&units=metric";
+                string response = await _httpClient.GetStringAsync(url);
+
+                //Parsing json response
+                JsonDocument json = JsonDocument.Parse(response);
+
+                //Get the number after temp in the json response
+                double temp = json.RootElement.GetProperty("main").GetProperty("temp").GetDouble();
+                //Get  description in the json response
+                string description = json.RootElement.GetProperty("weather")[0].GetProperty("description").GetString();
+                //Get the string after icon in the json response in this case it's the icon code
+                string icon = json.RootElement.GetProperty("weather")[0].GetProperty("icon").GetString();
+
+                //object to hold the result and if the api call was successful
+                return new WeatherResult
+                {
+                    Temperature = Math.Round(temp, 1),
+                    Description = description,
+                    IconCode = icon,
+                    Success = true
+                };
+            }
+            //In case of any error return a failed result
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Weather API error: {ex.Message}");
+                return new WeatherResult { Success = false, ErrorMessage = ex.Message };
+            }
+        }
+    }
+
+    //Struct for results from the weather api
+    public class WeatherResult
+    {
+        public double Temperature { get; set; }
+        public string Description { get; set; }
+        public string IconCode { get; set; }
+        public bool Success { get; set; }
+        public string ErrorMessage { get; set; }
+
+        public string ToSummary()
+        {
+            if (!Success) return "Weather unavailable";
+            return $"{Temperature}°C - {Description}";
+        }
+    }
+
     //UI
     public class PurchaseConfirmationForm : Form
     {
@@ -59,7 +129,15 @@ namespace WembleyManagementSystem
         private Label lblUsername = new Label();
         private Button btnLogout = new Button();
 
-        public ClientForm(EventManagementSystem system, UserManagementSystem userSystem, string loggedInUsername = null)
+        // Weather panel controls
+        private Panel weatherPanel = new Panel();
+        private Label lblWeatherIcon = new Label();
+        private Label lblWeatherTemp = new Label();
+        private Label lblWeatherDesc = new Label();
+        private Label lblWeatherTitle = new Label();
+        private Button btnRefreshWeather = new Button();
+
+    public ClientForm(EventManagementSystem system, UserManagementSystem userSystem, string loggedInUsername = null)
         {
             _system = system;
             _userSystem = userSystem;
@@ -110,20 +188,90 @@ namespace WembleyManagementSystem
             topPanel.Controls.Add(lblUsername);
             topPanel.Controls.Add(btnLogout);
 
+            weatherPanel.Dock = DockStyle.Top;
+            weatherPanel.Height = 60;
+            weatherPanel.BackColor = Color.FromArgb(45, 45, 80);
+
+            lblWeatherTitle = new Label
+            {
+                Text = "Wembley Stadium Weather",
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Color.FromArgb(180, 180, 220),
+                Location = new Point(15, 5),
+                Size = new Size(200, 18)
+            };
+
+            lblWeatherIcon = new Label
+            {
+                Text = "☁",
+                Font = new Font("Segoe UI", 20),
+                ForeColor = Color.White,
+                Location = new Point(15, 22),
+                Size = new Size(40, 35),
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+
+            lblWeatherTemp = new Label
+            {
+                Text = "Loading...",
+                Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(55, 24),
+                Size = new Size(120, 30),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+
+            lblWeatherDesc = new Label
+            {
+                Text = "",
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Color.FromArgb(200, 200, 230),
+                Location = new Point(175, 30),
+                Size = new Size(300, 22),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+
+            btnRefreshWeather = new Button
+            {
+                Text = "↻",
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                Location = new Point(720, 18),
+                Size = new Size(35, 30),
+                BackColor = Color.FromArgb(60, 60, 100),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Cursor = Cursors.Hand
+            };
+            //Button to refresh the weather data 
+            btnRefreshWeather.FlatAppearance.BorderSize = 0;
+            btnRefreshWeather.Click += (s, ev) => LoadWeatherAsync();
+
+            weatherPanel.Controls.Add(lblWeatherTitle);
+            weatherPanel.Controls.Add(lblWeatherIcon);
+            weatherPanel.Controls.Add(lblWeatherTemp);
+            weatherPanel.Controls.Add(lblWeatherDesc);
+            weatherPanel.Controls.Add(btnRefreshWeather);
+
             eventGrid.Dock = DockStyle.Fill;
             eventGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             eventGrid.AllowUserToAddRows = false;
 
             //adds the grid first so the top panel sits on top of it
             this.Controls.Add(eventGrid);
+            this.Controls.Add(weatherPanel);
             this.Controls.Add(topPanel);
 
             LoadEvents();
 
             //applies the correct login/logout UI state on startup
             UpdateLoginUI();
-        }
 
+            // Load weather data asynchronously on startup
+            LoadWeatherAsync();
+    }
+
+
+        
         private void BtnLogin_Click(object sender, EventArgs e)
         {
             //opens the login form and closes the current client form
@@ -226,6 +374,58 @@ namespace WembleyManagementSystem
                     this.Close();
                 }
             };
+        }
+
+        private async void LoadWeatherAsync()
+        {
+
+            //Show loading while is calling the api and disable the refresh button to prevent multiple calls
+            lblWeatherTemp.Text = "Loading...";
+            lblWeatherDesc.Text = "";
+            btnRefreshWeather.Enabled = false;
+
+            //Async call to get the weather data
+            WeatherResult result = await WeatherService.GetCurrentWeatherAsync();
+
+
+            //Update the weather panel with the result
+            if (result.Success)
+            {
+                lblWeatherIcon.Text = GetWeatherEmoji(result.IconCode);
+                lblWeatherTemp.Text = $"{result.Temperature}°C";
+                lblWeatherDesc.Text = result.Description;
+            }
+            //Error message in case the api call is failed
+            else
+            {
+                lblWeatherIcon.Text = "⚠";
+                lblWeatherTemp.Text = "Unavailable";
+                lblWeatherDesc.Text = "Could not load weather data";
+            }
+
+            btnRefreshWeather.Enabled = true;
+        }
+
+        private string GetWeatherEmoji(string iconCode)
+        {
+            //Maps OpenWeatherMap icon codes to simple weather emojis
+            if (string.IsNullOrEmpty(iconCode)) return "☁";
+
+            string baseCode = iconCode.Length >= 2 ? iconCode.Substring(0, 2) : iconCode;
+
+            switch (baseCode)
+            {
+                case "01": return "☀"; 
+                case "02": return "⛅";  
+                case "03": return "☁";   
+                case "04": return "☁";   
+                case "09": return "🌧";  
+                case "10": return "🌦"; 
+                case "11": return "⛈";   
+                case "13": return "❄";   
+                case "50": return "🌫";  
+                default: return "☁";
+            }
         }
     }
 
