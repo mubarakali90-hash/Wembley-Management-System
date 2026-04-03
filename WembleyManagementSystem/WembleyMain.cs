@@ -1164,7 +1164,7 @@ namespace WembleyManagementSystem
             Application.Run(new ClientForm(eventManagementSystem, userManagementSystem));
 
             //Admin Form
-            //Application.Run(new AdminUser.AdminBusinessForm(system, userManagementSystem, new User() { UserRole = "Admin" }));
+            Application.Run(new AdminUser.AdminBusinessForm(eventManagementSystem, userManagementSystem, new User() { UserRole = "Admin" }));
         }
     }
 }
