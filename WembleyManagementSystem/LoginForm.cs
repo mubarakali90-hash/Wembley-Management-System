@@ -35,63 +35,102 @@ namespace LoginUser
 
         private void InitializeComponents()
         {
-            // Form properties
-            this.Text = "Login";
-            this.Size = new Size(400, 300);
+            this.Text = "Wembley Management System";
+            this.Size = new Size(400, 390);
             this.StartPosition = FormStartPosition.CenterScreen;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
+            this.BackColor = Color.FromArgb(245, 247, 252);
 
-            // Title Label
-            lblTitle = new Label
+            // Thin gold accent strip at very top
+            Panel accentStrip = new Panel
             {
-                Text = "User Login",
-                Font = new Font("Segoe UI", 16, FontStyle.Bold),
-                Location = new Point(120, 20),
-                Size = new Size(160, 35),
+                Dock = DockStyle.Top,
+                Height = 4,
+                BackColor = Color.FromArgb(255, 190, 0)
+            };
+
+            // Main header
+            Panel headerPanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 86,
+                BackColor = Color.FromArgb(0, 55, 115)
+            };
+            Label lblHeaderTitle = new Label
+            {
+                Text = "WEMBLEY",
+                Font = new Font("Segoe UI", 22, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(0, 12),
+                Size = new Size(400, 38),
                 TextAlign = ContentAlignment.MiddleCenter
             };
+            Label lblHeaderSub = new Label
+            {
+                Text = "Management System",
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Color.FromArgb(180, 210, 255),
+                Location = new Point(0, 50),
+                Size = new Size(400, 22),
+                TextAlign = ContentAlignment.MiddleCenter
+            };
+            headerPanel.Controls.Add(lblHeaderTitle);
+            headerPanel.Controls.Add(lblHeaderSub);
 
-            // Username Label
+            // "Sign In" title
+            lblTitle = new Label
+            {
+                Text = "Sign in to your account",
+                Font = new Font("Segoe UI", 11),
+                ForeColor = Color.FromArgb(60, 80, 110),
+                Location = new Point(50, 110),
+                Size = new Size(300, 24),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+
+            // Username
             lblUsername = new Label
             {
-                Text = "Username:",
-                Location = new Point(50, 80),
-                Size = new Size(80, 20)
+                Text = "Username",
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Color.FromArgb(50, 65, 90),
+                Location = new Point(50, 148),
+                Size = new Size(80, 18)
             };
-
-            // Username TextBox
             txtUsername = new TextBox
             {
-                Location = new Point(140, 78),
-                Size = new Size(200, 25),
-                Font = new Font("Segoe UI", 10)
+                Location = new Point(50, 168),
+                Size = new Size(295, 26),
+                Font = new Font("Segoe UI", 10),
+                BorderStyle = BorderStyle.FixedSingle
             };
 
-            // Password Label
+            // Password
             lblPassword = new Label
             {
-                Text = "Password:",
-                Location = new Point(50, 120),
-                Size = new Size(80, 20)
+                Text = "Password",
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Color.FromArgb(50, 65, 90),
+                Location = new Point(50, 206),
+                Size = new Size(80, 18)
             };
-
-            // Password TextBox
             txtPassword = new TextBox
             {
-                Location = new Point(140, 118),
-                Size = new Size(200, 25),
+                Location = new Point(50, 226),
+                Size = new Size(295, 26),
                 PasswordChar = '•',
-                Font = new Font("Segoe UI", 10)
+                Font = new Font("Segoe UI", 10),
+                BorderStyle = BorderStyle.FixedSingle
             };
 
-            // Login Button
+            // Login button
             btnLogin = new Button
             {
                 Text = "Login",
-                Location = new Point(140, 170),
-                Size = new Size(200, 35),
-                BackColor = Color.FromArgb(0, 120, 215),
+                Location = new Point(50, 272),
+                Size = new Size(295, 36),
+                BackColor = Color.FromArgb(0, 55, 115),
                 ForeColor = Color.White,
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
@@ -100,28 +139,39 @@ namespace LoginUser
             btnLogin.FlatAppearance.BorderSize = 0;
             btnLogin.Click += BtnLogin_Click;
 
-            // Register Button
+            // Separator line
+            Panel separator = new Panel
+            {
+                Location = new Point(50, 320),
+                Size = new Size(295, 1),
+                BackColor = Color.FromArgb(210, 220, 235)
+            };
+
+            // Register button
             btnRegister = new Button
             {
-                Text = "Create Account",
-                Location = new Point(140, 215),
-                Size = new Size(200, 30),
-                BackColor = Color.White,
-                ForeColor = Color.FromArgb(0, 120, 215),
+                Text = "Don't have an account?  Create one",
+                Location = new Point(50, 328),
+                Size = new Size(295, 28),
+                BackColor = Color.FromArgb(245, 247, 252),
+                ForeColor = Color.FromArgb(0, 85, 170),
                 FlatStyle = FlatStyle.Flat,
                 Font = new Font("Segoe UI", 9),
-                Cursor = Cursors.Hand
+                Cursor = Cursors.Hand,
+                TextAlign = ContentAlignment.MiddleCenter
             };
-            btnRegister.FlatAppearance.BorderColor = Color.FromArgb(0, 120, 215);
+            btnRegister.FlatAppearance.BorderSize = 0;
             btnRegister.Click += BtnRegister_Click;
 
-            // Add controls to form
+            this.Controls.Add(accentStrip);
+            this.Controls.Add(headerPanel);
             this.Controls.Add(lblTitle);
             this.Controls.Add(lblUsername);
             this.Controls.Add(txtUsername);
             this.Controls.Add(lblPassword);
             this.Controls.Add(txtPassword);
             this.Controls.Add(btnLogin);
+            this.Controls.Add(separator);
             this.Controls.Add(btnRegister);
         }
 
