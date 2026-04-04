@@ -30,42 +30,147 @@ namespace AdminUser
         private void InitializeComponents()
         {
             this.Text = _currentUser.UserRole == "Admin" ? "Admin Dashboard" : "Business Dashboard";
-            this.Size = new Size(850, 550);
+            this.Size = new Size(870, 590);
             this.StartPosition = FormStartPosition.CenterScreen;
+            this.BackColor = Color.FromArgb(245, 247, 252);
 
-            // Buttons
-            btnAddEvent = new Button { Text = "Add New Event", Location = new Point(20, 20), Size = new Size(130, 40), BackColor = Color.LightGreen, Cursor = Cursors.Hand };
+            // Gold accent strip at top
+            Panel accentStrip = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 4,
+                BackColor = Color.FromArgb(255, 190, 0)
+            };
+
+            // Header panel
+            Panel headerPanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 48,
+                BackColor = Color.FromArgb(0, 55, 115)
+            };
+            string roleLabel = _currentUser.UserRole == "Admin" ? "Administrator" : "Business";
+            Label lblUserInfo = new Label
+            {
+                Text = $"  {_currentUser.Username}   \u2022   {roleLabel}",
+                Font = new Font("Segoe UI", 10),
+                ForeColor = Color.FromArgb(195, 220, 255),
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            Label lblDashTitle = new Label
+            {
+                Text = _currentUser.UserRole == "Admin" ? "Admin Dashboard  " : "Business Dashboard  ",
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.White,
+                Dock = DockStyle.Right,
+                Width = 200,
+                TextAlign = ContentAlignment.MiddleRight
+            };
+            headerPanel.Controls.Add(lblUserInfo);
+            headerPanel.Controls.Add(lblDashTitle);
+
+            // Button toolbar panel
+            Panel toolbarPanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 58,
+                BackColor = Color.White,
+                Padding = new Padding(15, 10, 15, 10)
+            };
+            Panel toolbarBorder = new Panel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 1,
+                BackColor = Color.FromArgb(210, 220, 235)
+            };
+            toolbarPanel.Controls.Add(toolbarBorder);
+
+            // Add button
+            btnAddEvent = new Button
+            {
+                Text = "+ Add Event",
+                Location = new Point(15, 12),
+                Size = new Size(115, 34),
+                BackColor = Color.FromArgb(34, 120, 60),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnAddEvent.FlatAppearance.BorderSize = 0;
             btnAddEvent.Click += BtnAddEvent_Click;
 
-            btnUpdateEvent = new Button { Text = "Update Selected", Location = new Point(160, 20), Size = new Size(130, 40), BackColor = Color.LightYellow, Cursor = Cursors.Hand };
+            // Update button
+            btnUpdateEvent = new Button
+            {
+                Text = "Edit Selected",
+                Location = new Point(140, 12),
+                Size = new Size(115, 34),
+                BackColor = Color.FromArgb(160, 100, 0),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnUpdateEvent.FlatAppearance.BorderSize = 0;
             btnUpdateEvent.Click += BtnUpdateEvent_Click;
 
-            btnDeleteEvent = new Button { Text = "Delete Selected", Location = new Point(300, 20), Size = new Size(130, 40), BackColor = Color.LightCoral, Cursor = Cursors.Hand };
+            // Delete button
+            btnDeleteEvent = new Button
+            {
+                Text = "Delete Selected",
+                Location = new Point(265, 12),
+                Size = new Size(115, 34),
+                BackColor = Color.FromArgb(175, 35, 35),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnDeleteEvent.FlatAppearance.BorderSize = 0;
             btnDeleteEvent.Click += BtnDeleteEvent_Click;
 
-            // Admin Only Button
-            btnManageUsers = new Button { Text = "Manage Users", Location = new Point(680, 20), Size = new Size(130, 40), BackColor = Color.LightBlue, Cursor = Cursors.Hand };
+            // Manage Users (Admin only)
+            btnManageUsers = new Button
+            {
+                Text = "Manage Users",
+                Location = new Point(710, 12),
+                Size = new Size(120, 34),
+                BackColor = Color.FromArgb(0, 55, 115),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Visible = _currentUser.UserRole == "Admin"
+            };
+            btnManageUsers.FlatAppearance.BorderSize = 0;
             btnManageUsers.Click += BtnManageUsers_Click;
-            btnManageUsers.Visible = _currentUser.UserRole == "Admin"; // Hide if Business
 
-            // DataGridView for Events
+            toolbarPanel.Controls.Add(btnAddEvent);
+            toolbarPanel.Controls.Add(btnUpdateEvent);
+            toolbarPanel.Controls.Add(btnDeleteEvent);
+            toolbarPanel.Controls.Add(btnManageUsers);
+
+            // DataGridView
             dgvEvents = new DataGridView
             {
-                Location = new Point(20, 80),
-                Size = new Size(790, 400),
+                Location = new Point(15, 130),
+                Size = new Size(828, 400),
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 ReadOnly = true,
                 AllowUserToAddRows = false,
-                RowHeadersVisible = false
+                RowHeadersVisible = false,
+                BorderStyle = BorderStyle.None,
+                BackgroundColor = Color.White,
+                GridColor = Color.FromArgb(225, 230, 240)
             };
 
-            // Add controls
-            this.Controls.Add(btnAddEvent);
-            this.Controls.Add(btnUpdateEvent);
-            this.Controls.Add(btnDeleteEvent);
-            this.Controls.Add(btnManageUsers);
             this.Controls.Add(dgvEvents);
+            this.Controls.Add(toolbarPanel);
+            this.Controls.Add(headerPanel);
+            this.Controls.Add(accentStrip);
         }
 
         private void LoadEvents()
@@ -179,34 +284,82 @@ namespace AdminUser
             _currentUser = currentUser;
 
             this.Text = "Add New Event";
-            this.Size = new Size(350, 300);
+            this.Size = new Size(380, 360);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
+            this.BackColor = Color.FromArgb(245, 247, 252);
 
-            Label lblName = new Label { Text = "Event Name:", Location = new Point(20, 20), Size = new Size(100, 20) };
-            txtEventName = new TextBox { Location = new Point(130, 18), Size = new Size(180, 25) };
+            // Gold accent strip
+            Panel accentStrip = new Panel { Dock = DockStyle.Top, Height = 4, BackColor = Color.FromArgb(255, 190, 0) };
 
-            Label lblDate = new Label { Text = "Date:", Location = new Point(20, 60), Size = new Size(100, 20) };
-            dtpEventDate = new DateTimePicker { Location = new Point(130, 58), Size = new Size(180, 25) };
+            // Header
+            Panel headerPanel = new Panel { Dock = DockStyle.Top, Height = 46, BackColor = Color.FromArgb(0, 55, 115) };
+            Label lblHeader = new Label
+            {
+                Text = "Add New Event",
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.White,
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(16, 0, 0, 0)
+            };
+            headerPanel.Controls.Add(lblHeader);
 
-            Label lblType = new Label { Text = "Type:", Location = new Point(20, 100), Size = new Size(100, 20) };
-            cmbEventType = new ComboBox { Location = new Point(130, 98), Size = new Size(180, 25), DropDownStyle = ComboBoxStyle.DropDownList };
+            // Event Name
+            Label lblName = new Label { Text = "Event Name", Font = new Font("Segoe UI", 9, FontStyle.Bold), ForeColor = Color.FromArgb(50, 65, 90), Location = new Point(25, 65), Size = new Size(310, 16) };
+            txtEventName = new TextBox { Location = new Point(25, 83), Size = new Size(310, 24), Font = new Font("Segoe UI", 10), BorderStyle = BorderStyle.FixedSingle };
+
+            // Date and Type side by side
+            Label lblDate = new Label { Text = "Date", Font = new Font("Segoe UI", 9, FontStyle.Bold), ForeColor = Color.FromArgb(50, 65, 90), Location = new Point(25, 122), Size = new Size(145, 16) };
+            dtpEventDate = new DateTimePicker { Location = new Point(25, 140), Size = new Size(148, 24), Font = new Font("Segoe UI", 9) };
+
+            Label lblType = new Label { Text = "Type", Font = new Font("Segoe UI", 9, FontStyle.Bold), ForeColor = Color.FromArgb(50, 65, 90), Location = new Point(187, 122), Size = new Size(145, 16) };
+            cmbEventType = new ComboBox { Location = new Point(187, 140), Size = new Size(148, 24), DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9) };
             cmbEventType.Items.AddRange(new string[] { "Football", "Concert", "Comedy", "Other" });
 
-            Label lblPrice = new Label { Text = "Price (£):", Location = new Point(20, 140), Size = new Size(100, 20) };
-            numPrice = new NumericUpDown { Location = new Point(130, 138), Size = new Size(180, 25), Maximum = 1000 };
+            // Price
+            Label lblPrice = new Label { Text = "Price (£)", Font = new Font("Segoe UI", 9, FontStyle.Bold), ForeColor = Color.FromArgb(50, 65, 90), Location = new Point(25, 182), Size = new Size(145, 16) };
+            numPrice = new NumericUpDown { Location = new Point(25, 200), Size = new Size(148, 24), Maximum = 1000, Font = new Font("Segoe UI", 9) };
 
-            Button btnSave = new Button { Text = "Save Event", Location = new Point(50, 200), Size = new Size(100, 35), BackColor = Color.LightGreen };
+            // Separator
+            Panel sep = new Panel { Location = new Point(25, 246), Size = new Size(310, 1), BackColor = Color.FromArgb(210, 220, 235) };
+
+            // Buttons
+            Button btnSave = new Button
+            {
+                Text = "Save Event",
+                Location = new Point(25, 256),
+                Size = new Size(145, 34),
+                BackColor = Color.FromArgb(34, 120, 60),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnSave.FlatAppearance.BorderSize = 0;
             btnSave.Click += BtnSave_Click;
 
-            Button btnCancel = new Button { Text = "Cancel", Location = new Point(180, 200), Size = new Size(100, 35), BackColor = Color.LightGray };
+            Button btnCancel = new Button
+            {
+                Text = "Cancel",
+                Location = new Point(190, 256),
+                Size = new Size(145, 34),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9),
+                ForeColor = Color.FromArgb(80, 95, 120),
+                Cursor = Cursors.Hand
+            };
+            btnCancel.FlatAppearance.BorderColor = Color.FromArgb(210, 220, 235);
             btnCancel.Click += (s, e) => { this.DialogResult = DialogResult.Cancel; this.Close(); };
 
+            this.Controls.Add(accentStrip);
+            this.Controls.Add(headerPanel);
             this.Controls.Add(lblName); this.Controls.Add(txtEventName);
             this.Controls.Add(lblDate); this.Controls.Add(dtpEventDate);
             this.Controls.Add(lblType); this.Controls.Add(cmbEventType);
             this.Controls.Add(lblPrice); this.Controls.Add(numPrice);
+            this.Controls.Add(sep);
             this.Controls.Add(btnSave); this.Controls.Add(btnCancel);
         }
 
@@ -252,35 +405,83 @@ namespace AdminUser
             _eventToUpdate = eventToUpdate;
 
             this.Text = "Update Event";
-            this.Size = new Size(350, 300);
+            this.Size = new Size(380, 360);
             this.StartPosition = FormStartPosition.CenterParent;
             this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.MaximizeBox = false;
+            this.BackColor = Color.FromArgb(245, 247, 252);
 
-            Label lblName = new Label { Text = "Event Name:", Location = new Point(20, 20), Size = new Size(100, 20) };
-            txtEventName = new TextBox { Location = new Point(130, 18), Size = new Size(180, 25), Text = _eventToUpdate.EventName };
+            // Gold accent strip
+            Panel accentStrip = new Panel { Dock = DockStyle.Top, Height = 4, BackColor = Color.FromArgb(255, 190, 0) };
 
-            Label lblDate = new Label { Text = "Date:", Location = new Point(20, 60), Size = new Size(100, 20) };
-            dtpEventDate = new DateTimePicker { Location = new Point(130, 58), Size = new Size(180, 25), Value = _eventToUpdate.EventDate };
+            // Header
+            Panel headerPanel = new Panel { Dock = DockStyle.Top, Height = 46, BackColor = Color.FromArgb(0, 55, 115) };
+            Label lblHeader = new Label
+            {
+                Text = "Edit Event",
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.White,
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Padding = new Padding(16, 0, 0, 0)
+            };
+            headerPanel.Controls.Add(lblHeader);
 
-            Label lblType = new Label { Text = "Type:", Location = new Point(20, 100), Size = new Size(100, 20) };
-            cmbEventType = new ComboBox { Location = new Point(130, 98), Size = new Size(180, 25), DropDownStyle = ComboBoxStyle.DropDownList };
+            // Event Name
+            Label lblName = new Label { Text = "Event Name", Font = new Font("Segoe UI", 9, FontStyle.Bold), ForeColor = Color.FromArgb(50, 65, 90), Location = new Point(25, 65), Size = new Size(310, 16) };
+            txtEventName = new TextBox { Location = new Point(25, 83), Size = new Size(310, 24), Font = new Font("Segoe UI", 10), BorderStyle = BorderStyle.FixedSingle, Text = _eventToUpdate.EventName };
+
+            // Date and Type side by side
+            Label lblDate = new Label { Text = "Date", Font = new Font("Segoe UI", 9, FontStyle.Bold), ForeColor = Color.FromArgb(50, 65, 90), Location = new Point(25, 122), Size = new Size(145, 16) };
+            dtpEventDate = new DateTimePicker { Location = new Point(25, 140), Size = new Size(148, 24), Font = new Font("Segoe UI", 9), Value = _eventToUpdate.EventDate };
+
+            Label lblType = new Label { Text = "Type", Font = new Font("Segoe UI", 9, FontStyle.Bold), ForeColor = Color.FromArgb(50, 65, 90), Location = new Point(187, 122), Size = new Size(145, 16) };
+            cmbEventType = new ComboBox { Location = new Point(187, 140), Size = new Size(148, 24), DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9) };
             cmbEventType.Items.AddRange(new string[] { "Football", "Concert", "Comedy", "Other" });
             cmbEventType.SelectedItem = _eventToUpdate.EventType;
 
-            Label lblPrice = new Label { Text = "Price (£):", Location = new Point(20, 140), Size = new Size(100, 20) };
-            numPrice = new NumericUpDown { Location = new Point(130, 138), Size = new Size(180, 25), Maximum = 1000, Value = _eventToUpdate.EventPrice };
+            // Price
+            Label lblPrice = new Label { Text = "Price (£)", Font = new Font("Segoe UI", 9, FontStyle.Bold), ForeColor = Color.FromArgb(50, 65, 90), Location = new Point(25, 182), Size = new Size(145, 16) };
+            numPrice = new NumericUpDown { Location = new Point(25, 200), Size = new Size(148, 24), Maximum = 1000, Font = new Font("Segoe UI", 9), Value = _eventToUpdate.EventPrice };
 
-            Button btnSave = new Button { Text = "Save Changes", Location = new Point(50, 200), Size = new Size(110, 35), BackColor = Color.LightYellow };
+            // Separator
+            Panel sep = new Panel { Location = new Point(25, 246), Size = new Size(310, 1), BackColor = Color.FromArgb(210, 220, 235) };
+
+            // Buttons
+            Button btnSave = new Button
+            {
+                Text = "Save Changes",
+                Location = new Point(25, 256),
+                Size = new Size(145, 34),
+                BackColor = Color.FromArgb(160, 100, 0),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnSave.FlatAppearance.BorderSize = 0;
             btnSave.Click += BtnSave_Click;
 
-            Button btnCancel = new Button { Text = "Cancel", Location = new Point(180, 200), Size = new Size(100, 35), BackColor = Color.LightGray };
+            Button btnCancel = new Button
+            {
+                Text = "Cancel",
+                Location = new Point(190, 256),
+                Size = new Size(145, 34),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9),
+                ForeColor = Color.FromArgb(80, 95, 120),
+                Cursor = Cursors.Hand
+            };
+            btnCancel.FlatAppearance.BorderColor = Color.FromArgb(210, 220, 235);
             btnCancel.Click += (s, e) => { this.DialogResult = DialogResult.Cancel; this.Close(); };
 
+            this.Controls.Add(accentStrip);
+            this.Controls.Add(headerPanel);
             this.Controls.Add(lblName); this.Controls.Add(txtEventName);
             this.Controls.Add(lblDate); this.Controls.Add(dtpEventDate);
             this.Controls.Add(lblType); this.Controls.Add(cmbEventType);
             this.Controls.Add(lblPrice); this.Controls.Add(numPrice);
+            this.Controls.Add(sep);
             this.Controls.Add(btnSave); this.Controls.Add(btnCancel);
         }
 

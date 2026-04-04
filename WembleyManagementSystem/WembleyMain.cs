@@ -137,6 +137,12 @@ namespace WembleyManagementSystem
         private Label lblWeatherTitle = new Label();
         private Button btnRefreshWeather = new Button();
 
+        // Search panel controls
+        private Panel searchPanel = new Panel();
+        private TextBox txtSearch = new TextBox();
+        private ComboBox cmbTypeFilter = new ComboBox();
+        private bool _buyHandlerAttached = false;
+
     public ClientForm(EventManagementSystem system, UserManagementSystem userSystem, string loggedInUsername = null)
         {
             _system = system;
@@ -147,15 +153,31 @@ namespace WembleyManagementSystem
 
             //sets up the top bar that holds the login and logout controls
             topPanel.Dock = DockStyle.Top;
-            topPanel.Height = 40;
-            topPanel.BackColor = Color.FromArgb(30, 30, 60);
+            topPanel.Height = 48;
+            topPanel.BackColor = Color.FromArgb(0, 55, 115);
+
+            // Gold accent strip at top of the bar
+            Panel topAccent = new Panel { Dock = DockStyle.Top, Height = 4, BackColor = Color.FromArgb(255, 190, 0) };
+            topPanel.Controls.Add(topAccent);
+
+            // App title on the left of the bar
+            Label lblAppTitle = new Label
+            {
+                Text = "Wembley Events",
+                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                ForeColor = Color.White,
+                Location = new Point(14, 12),
+                Size = new Size(200, 26),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            topPanel.Controls.Add(lblAppTitle);
 
             //login button shown when no user is logged in
             btnLogin.Text = "Login";
-            btnLogin.Location = new Point(696, 7);
+            btnLogin.Location = new Point(694, 11);
             btnLogin.Size = new Size(88, 26);
-            btnLogin.BackColor = Color.FromArgb(0, 120, 215);
-            btnLogin.ForeColor = Color.White;
+            btnLogin.BackColor = Color.FromArgb(255, 190, 0);
+            btnLogin.ForeColor = Color.FromArgb(0, 40, 90);
             btnLogin.FlatStyle = FlatStyle.Flat;
             btnLogin.FlatAppearance.BorderSize = 0;
             btnLogin.Font = new Font("Segoe UI", 9, FontStyle.Bold);
@@ -163,18 +185,18 @@ namespace WembleyManagementSystem
             btnLogin.Click += BtnLogin_Click;
 
             //username label hidden by default, shows after login
-            lblUsername.Location = new Point(555, 11);
-            lblUsername.Size = new Size(135, 18);
-            lblUsername.ForeColor = Color.White;
-            lblUsername.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+            lblUsername.Location = new Point(505, 15);
+            lblUsername.Size = new Size(183, 18);
+            lblUsername.ForeColor = Color.FromArgb(195, 220, 255);
+            lblUsername.Font = new Font("Segoe UI", 9);
             lblUsername.TextAlign = ContentAlignment.MiddleRight;
             lblUsername.Visible = false;
 
             //logout button hidden by default, shows after login
             btnLogout.Text = "Logout";
-            btnLogout.Location = new Point(696, 7);
+            btnLogout.Location = new Point(694, 11);
             btnLogout.Size = new Size(88, 26);
-            btnLogout.BackColor = Color.FromArgb(180, 40, 40);
+            btnLogout.BackColor = Color.FromArgb(175, 35, 35);
             btnLogout.ForeColor = Color.White;
             btnLogout.FlatStyle = FlatStyle.Flat;
             btnLogout.FlatAppearance.BorderSize = 0;
@@ -190,13 +212,13 @@ namespace WembleyManagementSystem
 
             weatherPanel.Dock = DockStyle.Top;
             weatherPanel.Height = 60;
-            weatherPanel.BackColor = Color.FromArgb(45, 45, 80);
+            weatherPanel.BackColor = Color.FromArgb(0, 40, 90);
 
             lblWeatherTitle = new Label
             {
                 Text = "Wembley Stadium Weather",
                 Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                ForeColor = Color.FromArgb(180, 180, 220),
+                ForeColor = Color.FromArgb(160, 200, 255),
                 Location = new Point(15, 5),
                 Size = new Size(200, 18)
             };
@@ -256,8 +278,105 @@ namespace WembleyManagementSystem
             eventGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             eventGrid.AllowUserToAddRows = false;
 
-            //adds the grid first so the top panel sits on top of it
+            // Grid styling
+            eventGrid.EnableHeadersVisualStyles = false;
+            eventGrid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(0, 55, 115);
+            eventGrid.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            eventGrid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+            eventGrid.ColumnHeadersDefaultCellStyle.Padding = new Padding(6, 0, 0, 0);
+            eventGrid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            eventGrid.ColumnHeadersHeight = 34;
+            eventGrid.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(242, 246, 255);
+            eventGrid.DefaultCellStyle.Padding = new Padding(6, 3, 6, 3);
+            eventGrid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(195, 215, 255);
+            eventGrid.DefaultCellStyle.SelectionForeColor = Color.FromArgb(20, 30, 50);
+            eventGrid.GridColor = Color.FromArgb(220, 228, 245);
+            eventGrid.BorderStyle = BorderStyle.None;
+            eventGrid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            eventGrid.BackgroundColor = Color.White;
+            eventGrid.RowHeadersVisible = false;
+
+            // Search panel
+            searchPanel.Dock = DockStyle.Top;
+            searchPanel.Height = 48;
+            searchPanel.BackColor = Color.White;
+
+            // Bottom border on the search panel
+            Panel searchBorder = new Panel { Dock = DockStyle.Bottom, Height = 1, BackColor = Color.FromArgb(210, 220, 235) };
+            searchPanel.Controls.Add(searchBorder);
+
+            Label lblSearch = new Label
+            {
+                Text = "Search:",
+                Location = new Point(12, 15),
+                Size = new Size(52, 18),
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Color.FromArgb(50, 70, 110)
+            };
+            txtSearch = new TextBox
+            {
+                Location = new Point(67, 12),
+                Size = new Size(195, 22),
+                Font = new Font("Segoe UI", 9),
+                BorderStyle = BorderStyle.FixedSingle
+            };
+            txtSearch.KeyDown += (s, ev) => { if (ev.KeyCode == Keys.Enter) ApplySearch(); };
+
+            Label lblType = new Label
+            {
+                Text = "Type:",
+                Location = new Point(275, 15),
+                Size = new Size(38, 18),
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                ForeColor = Color.FromArgb(50, 70, 110)
+            };
+            cmbTypeFilter = new ComboBox
+            {
+                Location = new Point(315, 12),
+                Size = new Size(112, 22),
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Font = new Font("Segoe UI", 9)
+            };
+            cmbTypeFilter.Items.AddRange(new string[] { "All", "Football", "Concert", "Comedy", "Other" });
+            cmbTypeFilter.SelectedIndex = 0;
+
+            Button btnSearch = new Button
+            {
+                Text = "Search",
+                Location = new Point(438, 11),
+                Size = new Size(70, 26),
+                BackColor = Color.FromArgb(0, 55, 115),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnSearch.FlatAppearance.BorderSize = 0;
+            btnSearch.Click += (s, ev) => ApplySearch();
+
+            Button btnClear = new Button
+            {
+                Text = "Clear",
+                Location = new Point(515, 11),
+                Size = new Size(52, 26),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9),
+                ForeColor = Color.FromArgb(90, 100, 120),
+                Cursor = Cursors.Hand
+            };
+            btnClear.FlatAppearance.BorderColor = Color.FromArgb(210, 220, 235);
+            btnClear.Click += (s, ev) => { txtSearch.Clear(); cmbTypeFilter.SelectedIndex = 0; ApplySearch(); };
+
+            searchPanel.Controls.Add(lblSearch);
+            searchPanel.Controls.Add(txtSearch);
+            searchPanel.Controls.Add(lblType);
+            searchPanel.Controls.Add(cmbTypeFilter);
+            searchPanel.Controls.Add(btnSearch);
+            searchPanel.Controls.Add(btnClear);
+
+            // Stack order: eventGrid (fill) → searchPanel (top) → weatherPanel (top) → topPanel (top)
             this.Controls.Add(eventGrid);
+            this.Controls.Add(searchPanel);
             this.Controls.Add(weatherPanel);
             this.Controls.Add(topPanel);
 
@@ -306,34 +425,31 @@ namespace WembleyManagementSystem
 
         private void LoadEvents()
         {
-            //Shows all the event using the getAllEvents function
-            eventGrid.DataSource = null;
-            eventGrid.DataSource = _system.GetAllEvents();
+            RefreshGrid(_system.GetAllEvents());
 
-            // Hide internal ID columns - data is preserved but not shown to clients
-            if (eventGrid.Columns.Contains("EventID"))
-                eventGrid.Columns["EventID"].Visible = false;
-            if (eventGrid.Columns.Contains("BusinessID"))
-                eventGrid.Columns["BusinessID"].Visible = false;
-            Console.WriteLine("Hidden EventID and BusinessID columns from DataGridView");
-
-            //adds the buy button, always visible
-            if (!eventGrid.Columns.Contains("BuyButton"))
+            if (!_buyHandlerAttached)
             {
+                // Add Buy button column once
                 var buyCol = new DataGridViewButtonColumn()
                 {
                     Name = "BuyButton",
                     HeaderText = "Action",
-                    Text = "Buy",
-                    UseColumnTextForButtonValue = true
+                    Text = "Buy Ticket",
+                    UseColumnTextForButtonValue = true,
+                    FlatStyle = FlatStyle.Flat,
+                    Width = 110
                 };
+                buyCol.DefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+                buyCol.DefaultCellStyle.ForeColor = Color.FromArgb(0, 55, 115);
+                buyCol.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
                 eventGrid.Columns.Add(buyCol);
-            }
 
-            eventGrid.CellContentClick += (s, e) =>
-            {
-                if (e.ColumnIndex == eventGrid.Columns["BuyButton"].Index && e.RowIndex >= 0)
+                // Wire click handler once
+                eventGrid.CellContentClick += (s, e) =>
                 {
+                    if (e.RowIndex < 0 || !eventGrid.Columns.Contains("BuyButton")) return;
+                    if (e.ColumnIndex != eventGrid.Columns["BuyButton"].Index) return;
+
                     //if not logged in, open login form first
                     if (_loggedInUsername == null)
                     {
@@ -372,8 +488,69 @@ namespace WembleyManagementSystem
                     eventGrid.Refresh();
                     Console.WriteLine("Closing ClientForm due to Buy button click");
                     this.Close();
-                }
-            };
+                };
+
+                _buyHandlerAttached = true;
+            }
+        }
+
+        private void RefreshGrid(WembleyEvent[] events)
+        {
+            eventGrid.DataSource = null;
+            eventGrid.DataSource = events;
+
+            // Hide internal ID columns
+            if (eventGrid.Columns.Contains("EventID"))
+                eventGrid.Columns["EventID"].Visible = false;
+            if (eventGrid.Columns.Contains("BusinessID"))
+                eventGrid.Columns["BusinessID"].Visible = false;
+
+            // Re-add Buy button column if cleared by DataSource change
+            if (_buyHandlerAttached && !eventGrid.Columns.Contains("BuyButton"))
+            {
+                var buyCol = new DataGridViewButtonColumn()
+                {
+                    Name = "BuyButton",
+                    HeaderText = "Action",
+                    Text = "Buy Ticket",
+                    UseColumnTextForButtonValue = true,
+                    FlatStyle = FlatStyle.Flat,
+                    Width = 110
+                };
+                buyCol.DefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+                buyCol.DefaultCellStyle.ForeColor = Color.FromArgb(0, 55, 115);
+                buyCol.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                eventGrid.Columns.Add(buyCol);
+            }
+        }
+
+        private void ApplySearch()
+        {
+            string name = txtSearch.Text.Trim().ToLower();
+            string type = cmbTypeFilter.SelectedItem?.ToString() ?? "All";
+
+            WembleyEvent[] all = _system.GetAllEvents();
+
+            int count = 0;
+            for (int i = 0; i < all.Length; i++)
+            {
+                if (all[i] == null) continue;
+                bool nameOk = string.IsNullOrEmpty(name) || all[i].EventName.ToLower().Contains(name);
+                bool typeOk = type == "All" || all[i].EventType == type;
+                if (nameOk && typeOk) count++;
+            }
+
+            WembleyEvent[] filtered = new WembleyEvent[count];
+            int idx = 0;
+            for (int i = 0; i < all.Length; i++)
+            {
+                if (all[i] == null) continue;
+                bool nameOk = string.IsNullOrEmpty(name) || all[i].EventName.ToLower().Contains(name);
+                bool typeOk = type == "All" || all[i].EventType == type;
+                if (nameOk && typeOk) filtered[idx++] = all[i];
+            }
+
+            RefreshGrid(filtered);
         }
 
         private async void LoadWeatherAsync()
