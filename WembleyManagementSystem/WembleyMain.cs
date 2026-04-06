@@ -394,16 +394,23 @@ namespace WembleyManagementSystem
         private void BtnLogin_Click(object sender, EventArgs e)
         {
             //opens the login form and closes the current client form
-            var loginForm = new LoginUser.LoginForm(_userSystem, _system);
+            var loginForm = new LoginUser.LoginForm(_userSystem, _system, this);
             loginForm.Show();
-            Console.WriteLine("Closing ClientForm due to Login button click");
-            this.Close();
+            
+           // Closes the current client form to ensure only one instance is open at a time
+           //this.Hide();
         }
 
         private void BtnLogout_Click(object sender, EventArgs e)
         {
             //clears the logged in user and updates the UI back to logged out state
             _loggedInUsername = null;
+            UpdateLoginUI();
+        }
+
+        public void SetLoggedInUser(string username)
+        {
+            _loggedInUsername = username;
             UpdateLoginUI();
         }
 
@@ -453,7 +460,7 @@ namespace WembleyManagementSystem
                     //if not logged in, open login form first
                     if (_loggedInUsername == null)
                     {
-                        var loginForm = new LoginUser.LoginForm(_userSystem, _system);
+                        var loginForm = new LoginUser.LoginForm(_userSystem, _system, this);
                         if (loginForm.ShowDialog(this) == DialogResult.OK)
                         {
                             _loggedInUsername = loginForm.loggedinUser.Username;
@@ -499,12 +506,17 @@ namespace WembleyManagementSystem
             eventGrid.DataSource = null;
             eventGrid.DataSource = events;
 
+            //This will prevent the button column placed first after searching
+            if (eventGrid.Columns.Contains("BuyButton"))
+                eventGrid.Columns.Remove("BuyButton"); 
+
             // Hide internal ID columns
             if (eventGrid.Columns.Contains("EventID"))
                 eventGrid.Columns["EventID"].Visible = false;
             if (eventGrid.Columns.Contains("BusinessID"))
                 eventGrid.Columns["BusinessID"].Visible = false;
 
+            
             // Re-add Buy button column if cleared by DataSource change
             if (_buyHandlerAttached && !eventGrid.Columns.Contains("BuyButton"))
             {
@@ -522,6 +534,7 @@ namespace WembleyManagementSystem
                 buyCol.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
                 eventGrid.Columns.Add(buyCol);
             }
+            
         }
 
         private void ApplySearch()
@@ -1541,7 +1554,7 @@ namespace WembleyManagementSystem
             Application.Run(new ClientForm(eventManagementSystem, userManagementSystem));
 
             //Admin Form
-            Application.Run(new AdminUser.AdminBusinessForm(eventManagementSystem, userManagementSystem, new User() { UserRole = "Admin" }));
+            //Application.Run(new AdminUser.AdminBusinessForm(eventManagementSystem, userManagementSystem, new User() { UserRole = "Admin" }));
         }
     }
 }
