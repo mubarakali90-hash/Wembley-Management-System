@@ -17,14 +17,25 @@ namespace AdminUser
         private Button btnUpdateEvent;
         private Button btnDeleteEvent;
         private Button btnManageUsers;
+        private readonly Form _lastOpenedForm;
 
-        public AdminBusinessForm(EventManagementSystem eventSystem, UserManagementSystem userSystem, User currentUser)
+        public AdminBusinessForm(EventManagementSystem eventSystem, UserManagementSystem userSystem, User currentUser, Form lastOpenedForm = null)
         {
             _eventSystem = eventSystem;
             _userSystem = userSystem;
+            _lastOpenedForm = lastOpenedForm;
             _currentUser = currentUser;
             InitializeComponents();
             LoadEvents();
+        }
+
+        override protected void OnFormClosed(FormClosedEventArgs e)
+        {
+            base.OnFormClosed(e);
+            if (_lastOpenedForm != null)
+            {
+                _lastOpenedForm.Show();
+            }
         }
 
         private void InitializeComponents()

@@ -22,10 +22,12 @@ namespace RegisterUser
 
 
         private readonly UserManagementSystem _userSystem;
+        private readonly Form _lastOpenedForm;
 
-        public RegisterFormClient(UserManagementSystem userSystem)
+        public RegisterFormClient(UserManagementSystem userSystem, Form LastOpenedForm = null)
         {
             _userSystem = userSystem;
+            _lastOpenedForm = LastOpenedForm;
             InitializeComponents();
         }
 
@@ -235,14 +237,24 @@ namespace RegisterUser
                     MessageBox.Show($"Account created successfully!\nUsername: {username}",
                   "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
+                    if (_lastOpenedForm != null)
+                    {
+                        LoginForm loginForm = _lastOpenedForm as LoginForm;
+                        if (loginForm != null)
+                        {
+                            loginForm.OnNewUserRegistered(newUser);
+                        }
+                    }
+
                     this.Close();
                 }
             }
-
             catch (Exception ex)
             {
                 MessageBox.Show($"Registration failed:\n{ex.Message}", "Database Error",
                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                this.Close();
             }
 
         }

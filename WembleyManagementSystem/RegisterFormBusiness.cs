@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LoginUser;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 using WembleyManagementSystem;
@@ -22,10 +23,12 @@ namespace WembleyManagementSystem
         private Label lblConfirmPassword;
 
         private readonly UserManagementSystem _userSystem;
+        private readonly Form _lastOpenedForm;
 
-        public RegisterFormBusiness(UserManagementSystem userSystem)
+        public RegisterFormBusiness(UserManagementSystem userSystem, Form LastOpenedForm = null)
         {
             _userSystem = userSystem;
+            _lastOpenedForm = LastOpenedForm;
             InitializeComponents();
         }
 
@@ -48,54 +51,64 @@ namespace WembleyManagementSystem
             };
 
             // Username
-            lblUsername = new Label { 
-                Text = "Business Name:", Location = new Point(50, 80),
-                Size = new Size(100, 20) };
+            lblUsername = new Label
+            {
+                Text = "Business Name:",
+                Location = new Point(50, 80),
+                Size = new Size(100, 20)
+            };
 
             txtUsername = new TextBox
-            { 
+            {
                 Location = new Point(150, 78),
-                Size = new Size(190, 25), 
-                Font = new Font("Segoe UI", 10) 
+                Size = new Size(190, 25),
+                Font = new Font("Segoe UI", 10)
             };
 
             // Email
-            lblEmail = new Label 
-            { 
-                Text = "Email:", Location = new Point(50, 120),
-                Size = new Size(90, 20) 
+            lblEmail = new Label
+            {
+                Text = "Email:",
+                Location = new Point(50, 120),
+                Size = new Size(90, 20)
             };
 
             txtEmail = new TextBox
-            { Location = new Point(150, 118),
+            {
+                Location = new Point(150, 118),
                 Size = new Size(190, 25),
-                Font = new Font("Segoe UI", 10) 
+                Font = new Font("Segoe UI", 10)
             };
 
             // Password
-            lblPassword = new Label 
-            { 
-                Text = "Password:", Location = new Point(50, 160),
-                Size = new Size(90, 20) 
+            lblPassword = new Label
+            {
+                Text = "Password:",
+                Location = new Point(50, 160),
+                Size = new Size(90, 20)
             };
 
-            txtPassword = new TextBox 
-            { Location = new Point(150, 158),
-                Size = new Size(190, 25), PasswordChar = '•',
-                Font = new Font("Segoe UI", 10) 
+            txtPassword = new TextBox
+            {
+                Location = new Point(150, 158),
+                Size = new Size(190, 25),
+                PasswordChar = '•',
+                Font = new Font("Segoe UI", 10)
             };
 
             // Confirm Password
-            lblConfirmPassword = new Label 
-            { 
-                Text = "Confirm:", Location = new Point(50, 200),
-                Size = new Size(90, 20) 
+            lblConfirmPassword = new Label
+            {
+                Text = "Confirm:",
+                Location = new Point(50, 200),
+                Size = new Size(90, 20)
             };
 
-            txtConfirmPassword = new TextBox 
+            txtConfirmPassword = new TextBox
             {
-                Location = new Point(150, 198), 
-                Size = new Size(190, 25), PasswordChar = '•',
+                Location = new Point(150, 198),
+                Size = new Size(190, 25),
+                PasswordChar = '•',
                 Font = new Font("Segoe UI", 10)
             };
 
@@ -202,8 +215,17 @@ namespace WembleyManagementSystem
             {
                 _userSystem.RegisterUser(newUser);
 
-                MessageBox.Show($"Business account created!\nUsername: {username}",
+                MessageBox.Show($"Business account created!\nUsername: {username} but your business account is pending verification by an Admin. You cannot access the dashboard yet.",
                     "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                if (_lastOpenedForm != null)
+                {
+                    LoginForm loginForm = _lastOpenedForm as LoginForm;
+                    if (loginForm != null)
+                    {
+                        loginForm.OnNewUserRegistered(newUser);
+                    }
+                }
 
                 this.Close();
             }
@@ -218,7 +240,7 @@ namespace WembleyManagementSystem
         {
             this.Close();
         }
-        
+
 
         private void RegisterFormBusiness_Load(object sender, EventArgs e)
         {

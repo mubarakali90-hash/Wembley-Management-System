@@ -21,20 +21,52 @@ namespace LoginUser
 
         private readonly UserManagementSystem _userSystem;
         private readonly EventManagementSystem _eventSystem;
+        private readonly Form _lastOpenedForm;
 
         //UserManagementSystem to use the method FindByCredentials, EventManagmentSystem to open the ClientForm
-        public LoginForm(UserManagementSystem userSystem, EventManagementSystem eventSystem)
+        public LoginForm(UserManagementSystem userSystem, EventManagementSystem eventSystem, Form LastOpenedForm = null)
         {
             _userSystem = userSystem;
             _eventSystem = eventSystem;
+            _lastOpenedForm = LastOpenedForm;
             InitializeComponents();
         }
 
         //Property User logged
         public User loggedinUser { get; private set; }
 
+        public void OnNewUserRegistered(User newUser)
+        {
+            if (_lastOpenedForm != null)
+            {
+                ClientForm clientForm = _lastOpenedForm as ClientForm;
+                if (clientForm != null)
+                {
+                    clientForm.SetLoggedInUser(newUser.Username);
+                    clientForm.Show();
+                }
+            }
+
+            this.Close();
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            // When the login form is closed, show the last opened form if any
+            base.OnFormClosed(e);
+            if (_lastOpenedForm != null)
+            {
+                _lastOpenedForm.Show();
+            }
+        }
+
         private void InitializeComponents()
         {
+            if(_lastOpenedForm != null)
+            {
+                _lastOpenedForm.Hide();
+            }
+
             this.Text = "Wembley Management System";
             this.Size = new Size(400, 390);
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -212,17 +244,51 @@ namespace LoginUser
                 case "Admin":
                 case "Verified_Business":
                     // Open the shared Admin/Business dashboard
-                    new AdminUser.AdminBusinessForm(_eventSystem, _userSystem, loggedinUser).Show();
+                    new AdminUser.AdminBusinessForm(_eventSystem, _userSystem, loggedinUser, _lastOpenedForm).Show();
+                    this.Close();
+                    _lastOpenedForm.Hide(); //When this form is closed, OnFormClosed will trigger and open this so we need to hide it here to avoid showing it twice
                     break;
 
                 case "Unverified_Business":
                     // Block access and show a message
                     MessageBox.Show("Your business account is pending verification by an Admin. You cannot access the dashboard yet.", 
                         "Account Unverified", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                    // Close the last opened form if it exists
+                    if (_lastOpenedForm != null)
+                    {
+                        ClientForm lastForm = _lastOpenedForm as ClientForm;
+
+                        if (lastForm != null)
+                        {
+                            lastForm.SetLoggedInUser(loggedinUser.Username);
+                            this.Close();
+                            lastForm.Show();
+                            break;
+                        }
+                    }
+
+
+                    new ClientForm(_eventSystem, _userSystem, loggedinUser.Username).Show();
                     break;
 
                 case "Client":
                 default:
+
+                    // Close the last opened form if it exists
+                    if (_lastOpenedForm != null)
+                    {
+                        ClientForm lastForm = _lastOpenedForm as ClientForm;
+
+                        if (lastForm != null)
+                        {
+                            lastForm.SetLoggedInUser(loggedinUser.Username);
+                            this.Close();
+                            lastForm.Show();
+                            break;
+                        }
+                    }
+
                     new ClientForm(_eventSystem, _userSystem, loggedinUser.Username).Show();
                     break;
             }
@@ -280,7 +346,7 @@ namespace LoginUser
             clientButton.Click += (s, args) =>
             {
                 choiceForm.Close();
-                RegisterUser.RegisterFormClient registerFormClient = new RegisterUser.RegisterFormClient(_userSystem);
+                RegisterUser.RegisterFormClient registerFormClient = new RegisterUser.RegisterFormClient(_userSystem, this);
                 registerFormClient.ShowDialog();
                 
             };
@@ -289,7 +355,7 @@ namespace LoginUser
             businessButton.Click += (s, args) =>
             {
                 choiceForm.Close();
-                RegisterFormBusiness registerFormBusiness = new RegisterFormBusiness(_userSystem);
+                RegisterFormBusiness registerFormBusiness = new RegisterFormBusiness(_userSystem, this);
                 registerFormBusiness.ShowDialog();
             };
 
