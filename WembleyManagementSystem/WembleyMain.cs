@@ -138,20 +138,41 @@ public void GetUsers()
     {
         private DataGridView eventGrid = new DataGridView();
         private EventManagementSystem _system;
-
+       
+        
         public ClientForm(EventManagementSystem system)
-        {
-            _system = system;
-            this.Text = "Wembley Events - Client Portal";
-            this.Size = new Size(800, 450);
+{
+    _system = system;
 
-            eventGrid.Dock = DockStyle.Fill;
-            eventGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            eventGrid.AllowUserToAddRows = false;
-            this.Controls.Add(eventGrid);
+    this.Text = "Wembley Events - Client Portal";
+    this.Size = new Size(800, 450);
 
-            LoadEvents();
-        }
+    eventGrid.Dock = DockStyle.Fill;
+    eventGrid.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+    eventGrid.AllowUserToAddRows = false;
+
+    this.Controls.Add(eventGrid);
+
+    Button chatBtn = new Button()
+    {
+        Text = "💬 AI Assistant",
+        Dock = DockStyle.Bottom,
+        Height = 40,
+        BackColor = Color.FromArgb(90, 60, 180),
+        ForeColor = Color.White,
+        FlatStyle = FlatStyle.Flat,
+        Font = new Font("Segoe UI", 10, FontStyle.Bold),
+        Cursor = Cursors.Hand
+    };
+
+    chatBtn.FlatAppearance.BorderSize = 0;
+    chatBtn.Click += (s, e) => new AIChatForm().ShowDialog();
+
+    this.Controls.Add(chatBtn);
+
+    // Load data
+    LoadEvents();
+}
 
         private void LoadEvents()
         {
