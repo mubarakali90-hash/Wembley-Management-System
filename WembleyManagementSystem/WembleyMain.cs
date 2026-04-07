@@ -149,7 +149,7 @@ namespace WembleyManagementSystem
             _userSystem = userSystem;
             _loggedInUsername = loggedInUsername;
             this.Text = "Wembley Events - Client Portal";
-            this.Size = new Size(800, 490);
+            this.Size = new Size(1120, 490);
 
             //sets up the top bar that holds the login and logout controls
             topPanel.Dock = DockStyle.Top;
@@ -379,6 +379,13 @@ namespace WembleyManagementSystem
             this.Controls.Add(searchPanel);
             this.Controls.Add(weatherPanel);
             this.Controls.Add(topPanel);
+
+
+            //AI Chatbox 
+            var chatBox = new AIChatBox(ConfigurationManager.AppSettings["AIkey"]);
+            chatBox.Dock = DockStyle.Right;
+            chatBox.Width = 300;
+            this.Controls.Add(chatBox);
 
             LoadEvents();
 
