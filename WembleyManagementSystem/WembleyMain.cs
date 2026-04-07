@@ -421,6 +421,11 @@ namespace WembleyManagementSystem
             UpdateLoginUI();
         }
 
+        public WembleyEvent[] GetEvents()
+        {
+            return _system.GetAllEvents();
+        }
+
         private void UpdateLoginUI()
         {
             bool loggedIn = _loggedInUsername != null;
