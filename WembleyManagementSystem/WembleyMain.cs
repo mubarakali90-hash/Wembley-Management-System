@@ -113,12 +113,101 @@ namespace WembleyManagementSystem
 
         }
     }
+    //Form to show the tickets purchased by the user
+    public class MyTicketsForm : Form
+    {
+        public MyTicketsForm(Purchase[] purchases, string username)
+        {
+            this.Text = $"My Tickets - {username}";
+            this.Size = new Size(650, 420);
+            this.StartPosition = FormStartPosition.CenterParent;
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.BackColor = Color.FromArgb(245, 247, 252);
+
+            Panel accentStrip = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 4,
+                BackColor = Color.FromArgb(255, 190, 0)
+            };
+
+            Panel headerPanel = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 48,
+                BackColor = Color.FromArgb(0, 55, 115)
+            };
+            Label lblHeader = new Label
+            {
+                Text = $"  My Tickets ({purchases.Length})",
+                Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                ForeColor = Color.White,
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+            headerPanel.Controls.Add(lblHeader);
+
+            DataGridView dgvTickets = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                RowHeadersVisible = false,
+                BorderStyle = BorderStyle.None,
+                BackgroundColor = Color.White,
+                GridColor = Color.FromArgb(225, 230, 240)
+            };
+
+            dgvTickets.EnableHeadersVisualStyles = false;
+            dgvTickets.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(0, 55, 115);
+            dgvTickets.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            dgvTickets.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+            dgvTickets.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            dgvTickets.ColumnHeadersHeight = 34;
+            dgvTickets.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(242, 246, 255);
+            dgvTickets.DefaultCellStyle.Padding = new Padding(6, 3, 6, 3);
+            dgvTickets.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+
+            dgvTickets.DataSource = purchases;
+
+            if (purchases.Length == 0)
+            {
+                Label lblNoTickets = new Label
+                {
+                    Text = "You haven't purchased any tickets yet.\nBrowse events and click 'Buy Ticket' to get started!",
+                    Font = new Font("Segoe UI", 11),
+                    ForeColor = Color.FromArgb(120, 130, 150),
+                    Dock = DockStyle.Fill,
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+                this.Controls.Add(lblNoTickets);
+            }
+            else
+            {
+                this.Controls.Add(dgvTickets);
+            }
+
+            this.Controls.Add(headerPanel);
+            this.Controls.Add(accentStrip);
+
+            dgvTickets.DataBindingComplete += (s, e) =>
+            {
+                if (dgvTickets.Columns.Contains("PurchaseID")) dgvTickets.Columns["PurchaseID"].Visible = false;
+                if (dgvTickets.Columns.Contains("UserID")) dgvTickets.Columns["UserID"].Visible = false;
+                if (dgvTickets.Columns.Contains("EventID")) dgvTickets.Columns["EventID"].Visible = false;
+            };
+        }
+    }
 
     public class ClientForm : Form
     {
         private DataGridView eventGrid = new DataGridView();
         private EventManagementSystem _system;
         private UserManagementSystem _userSystem;
+        private DatabaseManager _database = new DatabaseManager();
 
         //tracks who is logged in, null means no one is logged in
         private string _loggedInUsername = null;
@@ -142,8 +231,10 @@ namespace WembleyManagementSystem
         private TextBox txtSearch = new TextBox();
         private ComboBox cmbTypeFilter = new ComboBox();
         private bool _buyHandlerAttached = false;
+        private Button btnMyTickets = new Button();
 
-    public ClientForm(EventManagementSystem system, UserManagementSystem userSystem, string loggedInUsername = null)
+
+        public ClientForm(EventManagementSystem system, UserManagementSystem userSystem, string loggedInUsername = null)
         {
             _system = system;
             _userSystem = userSystem;
@@ -185,8 +276,8 @@ namespace WembleyManagementSystem
             btnLogin.Click += BtnLogin_Click;
 
             //username label hidden by default, shows after login
-            lblUsername.Location = new Point(505, 15);
-            lblUsername.Size = new Size(183, 18);
+            lblUsername.Location = new Point(390, 15);
+            lblUsername.Size = new Size(200, 18);
             lblUsername.ForeColor = Color.FromArgb(195, 220, 255);
             lblUsername.Font = new Font("Segoe UI", 9);
             lblUsername.TextAlign = ContentAlignment.MiddleRight;
@@ -209,6 +300,20 @@ namespace WembleyManagementSystem
             topPanel.Controls.Add(btnLogin);
             topPanel.Controls.Add(lblUsername);
             topPanel.Controls.Add(btnLogout);
+
+            //adds the "My Tickets" button to the top panel, visible only when logged in
+            btnMyTickets.Text = "My Tickets";
+            btnMyTickets.Location = new Point(596, 11);
+            btnMyTickets.Size = new Size(92, 26);
+            btnMyTickets.BackColor = Color.FromArgb(255, 190, 0);
+            btnMyTickets.ForeColor = Color.FromArgb(0, 40, 90);
+            btnMyTickets.FlatStyle = FlatStyle.Flat;
+            btnMyTickets.FlatAppearance.BorderSize = 0;
+            btnMyTickets.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+            btnMyTickets.Cursor = Cursors.Hand;
+            btnMyTickets.Visible = false;
+            btnMyTickets.Click += BtnMyTickets_Click;
+            topPanel.Controls.Add(btnMyTickets);
 
             weatherPanel.Dock = DockStyle.Top;
             weatherPanel.Height = 60;
@@ -394,18 +499,18 @@ namespace WembleyManagementSystem
 
             // Load weather data asynchronously on startup
             LoadWeatherAsync();
-    }
+        }
 
 
-        
+
         private void BtnLogin_Click(object sender, EventArgs e)
         {
             //opens the login form and closes the current client form
             var loginForm = new LoginUser.LoginForm(_userSystem, _system, this);
             loginForm.Show();
-            
-           // Closes the current client form to ensure only one instance is open at a time
-           //this.Hide();
+
+            // Closes the current client form to ensure only one instance is open at a time
+            //this.Hide();
         }
 
         private void BtnLogout_Click(object sender, EventArgs e)
@@ -440,6 +545,9 @@ namespace WembleyManagementSystem
 
             //refreshes the grid to reflect login state
             eventGrid.Refresh();
+
+            //shows the "My Tickets" button only when logged in
+            btnMyTickets.Visible = loggedIn;
         }
 
         private void LoadEvents()
@@ -501,12 +609,30 @@ namespace WembleyManagementSystem
                     //updates the attendance for the event
                     _system.UpdateEvent(selectedEvent.EventID, selectedEvent);
 
+                    UserNode[] users = _userSystem.GetAllUsers();
+                    User purchaseUser = null;
+                    //finds the user object for the currently logged in user to get their user id for the purchase record
+                    foreach (var userNode in users)
+                    {
+                        if (string.Equals(userNode.User.Username, _loggedInUsername, StringComparison.OrdinalIgnoreCase))
+                        {
+                            purchaseUser = userNode.User;
+                            break;
+                        }
+                    }
+                    //saves the purchase to the database with the user id and event id
+                    if (purchaseUser != null)
+                    {
+                       _database.InsertPurchase(purchaseUser.UserID, selectedEvent.EventID);
+                    }
+
                     //opens the UI to show the message
                     new PurchaseConfirmationForm().ShowDialog();
 
+
+                    ApplySearch(); // Re-apply search to refresh the grid with updated attendance
                     eventGrid.Refresh();
-                    Console.WriteLine("Closing ClientForm due to Buy button click");
-                    this.Close();
+
                 };
 
                 _buyHandlerAttached = true;
@@ -520,7 +646,7 @@ namespace WembleyManagementSystem
 
             //This will prevent the button column placed first after searching
             if (eventGrid.Columns.Contains("BuyButton"))
-                eventGrid.Columns.Remove("BuyButton"); 
+                eventGrid.Columns.Remove("BuyButton");
 
             // Hide internal ID columns
             if (eventGrid.Columns.Contains("EventID"))
@@ -528,7 +654,7 @@ namespace WembleyManagementSystem
             if (eventGrid.Columns.Contains("BusinessID"))
                 eventGrid.Columns["BusinessID"].Visible = false;
 
-            
+
             // Re-add Buy button column if cleared by DataSource change
             if (_buyHandlerAttached && !eventGrid.Columns.Contains("BuyButton"))
             {
@@ -546,7 +672,7 @@ namespace WembleyManagementSystem
                 buyCol.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
                 eventGrid.Columns.Add(buyCol);
             }
-            
+
         }
 
         private void ApplySearch()
@@ -617,15 +743,15 @@ namespace WembleyManagementSystem
 
             switch (baseCode)
             {
-                case "01": return "☀"; 
-                case "02": return "⛅";  
-                case "03": return "☁";   
-                case "04": return "☁";   
-                case "09": return "🌧";  
-                case "10": return "🌦"; 
-                case "11": return "⛈";   
-                case "13": return "❄";   
-                case "50": return "🌫";  
+                case "01": return "☀";
+                case "02": return "⛅";
+                case "03": return "☁";
+                case "04": return "☁";
+                case "09": return "🌧";
+                case "10": return "🌦";
+                case "11": return "⛈";
+                case "13": return "❄";
+                case "50": return "🌫";
                 default: return "☁";
             }
         }
@@ -831,742 +957,814 @@ namespace WembleyManagementSystem
                 }
             }
         }
+
+        //Insert Purchases on the database when user bought a ticket
+        public void InsertPurchase(int userId, int eventId)
+        {
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                string sql = @"INSERT INTO Purchases (UserID, EventID, PurchaseDate)
+                           VALUES (@UserID, @EventID, @PurchaseDate)";
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    cmd.Parameters.AddWithValue("@EventID", eventId);
+                    cmd.Parameters.AddWithValue("@PurchaseDate", DateTime.Now);
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        //Get the purchase history of the user by joining the Purchases and Events tables to get the event details for each purchase
+        public Purchase[] GetPurchasesByUser(int userId)
+        {
+            using (SqlConnection conn = new SqlConnection(connString))
+            {
+                string sql = @"SELECT p.PurchaseID, p.UserID, p.EventID,e.EventName, e.EventDate, e.EventType, e.EventPrice, p.PurchaseDate
+                               FROM Purchases p
+                               INNER  JOIN Events e ON p.EventID = e.EventID
+                               WHERE p.UserID = @UserID
+                               ORDER BY p.PurchaseDate DESC";
+
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@UserID", userId);
+                    conn.Open();
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        //Using a list to store the purchases temporarily while reading from the database
+                        var tempList = new System.Collections.Generic.List<Purchase>();
+                        while (reader.Read())
+                        {
+                            tempList.Add(new Purchase()
+                            {
+                                PurchaseID = reader.GetInt32(0),
+                                UserID = reader.GetInt32(1),
+                                EventID = reader.GetInt32(2),
+                                EventName = reader.GetString(3),
+                                EventDate = reader.GetDateTime(4),
+                                EventType = reader.GetString(5),
+                                EventPrice = reader.GetInt32(6),
+                                PurchaseDate = reader.GetDateTime(7)
+                            });
+                        }
+                        return tempList.ToArray();
+                    }
+                }
+            }
+        }
     }
 
-    //Wembley Event Part
-    public class EventNode
-    {
-        public WembleyEvent Event { get; set; }
-        public EventNode Right { get; set; } // Pointer to the right child node (events with greater EventID)
-        public EventNode Left { get; set; } // Pointer to the left child node (events with smaller EventID)
+        
 
-        public EventNode(WembleyEvent wembleyEvent)
+        //Wembley Event Part
+        public class EventNode
         {
-            Event = wembleyEvent;
-        }
+            public WembleyEvent Event { get; set; }
+            public EventNode Right { get; set; } // Pointer to the right child node (events with greater EventID)
+            public EventNode Left { get; set; } // Pointer to the left child node (events with smaller EventID)
 
-        public int GetEventID()
-        {
-            if (Event != null)
+            public EventNode(WembleyEvent wembleyEvent)
             {
-                return Event.EventID;
+                Event = wembleyEvent;
             }
 
-            return -1; // Returning error
-        }
-    }
-
-    public class EventBinaryTree
-    {
-        private EventNode root;
-        public int currentMaxEventID = 0; // To keep track of the current maximum event ID for assigning new IDs
-
-        public EventBinaryTree()
-        {
-            root = null;
-        }
-
-        //Get root node
-        public EventNode GetRoot()
-        {
-            return root;
-        }
-
-        //Inserting
-        public void Insert(WembleyEvent wembleyEvent)
-        {
-            if (root == null)
+            public int GetEventID()
             {
-                root = new EventNode(wembleyEvent);
-                currentMaxEventID = wembleyEvent.EventID;
-                return;
-            }
-
-            if (wembleyEvent.EventID > currentMaxEventID)
-            {
-                currentMaxEventID = wembleyEvent.EventID;
-            }
-
-
-            InsertRec(root, wembleyEvent);
-
-            //Rebalancing the tree after every inserting new node
-            Rebalance();
-        }
-
-        private void InsertRec(EventNode currentRoot, WembleyEvent wembleyEvent)
-        {
-            if (currentRoot.GetEventID() < wembleyEvent.EventID)
-            {
-                if (currentRoot.Right == null)
+                if (Event != null)
                 {
-                    currentRoot.Right = new EventNode(wembleyEvent);
+                    return Event.EventID;
                 }
-                else
-                {
-                    InsertRec(currentRoot.Right, wembleyEvent);
-                }
-            }
-            else if (currentRoot.GetEventID() > wembleyEvent.EventID)
-            {
-                if (currentRoot.Left == null)
-                {
-                    currentRoot.Left = new EventNode(wembleyEvent);
-                }
-                else
-                {
-                    InsertRec(currentRoot.Left, wembleyEvent);
-                }
-            }
 
+                return -1; // Returning error
+            }
         }
 
-        //Delete
-        public void Delete(WembleyEvent wembleyEvent)
+        public class EventBinaryTree
         {
-            root = DeleteRec(root, wembleyEvent.EventID);
-        }
+            private EventNode root;
+            public int currentMaxEventID = 0; // To keep track of the current maximum event ID for assigning new IDs
 
-        private EventNode DeleteRec(EventNode currentRoot, int eventID)
-        {
-            // Base case: empty tree
-            if (currentRoot == null)
+            public EventBinaryTree()
             {
-                return null;
+                root = null;
             }
 
-            //Traverse the tree to find the node to delete
-            if (eventID < currentRoot.GetEventID())
+            //Get root node
+            public EventNode GetRoot()
             {
-                currentRoot.Left = DeleteRec(currentRoot.Left, eventID);
+                return root;
             }
-            else if (eventID > currentRoot.GetEventID())
+
+            //Inserting
+            public void Insert(WembleyEvent wembleyEvent)
             {
-                currentRoot.Right = DeleteRec(currentRoot.Right, eventID);
+                if (root == null)
+                {
+                    root = new EventNode(wembleyEvent);
+                    currentMaxEventID = wembleyEvent.EventID;
+                    return;
+                }
+
+                if (wembleyEvent.EventID > currentMaxEventID)
+                {
+                    currentMaxEventID = wembleyEvent.EventID;
+                }
+
+
+                InsertRec(root, wembleyEvent);
+
+                //Rebalancing the tree after every inserting new node
+                Rebalance();
             }
-            else
+
+            private void InsertRec(EventNode currentRoot, WembleyEvent wembleyEvent)
             {
-                //Node with no children
-                if (currentRoot.Left == null && currentRoot.Right == null)
+                if (currentRoot.GetEventID() < wembleyEvent.EventID)
+                {
+                    if (currentRoot.Right == null)
+                    {
+                        currentRoot.Right = new EventNode(wembleyEvent);
+                    }
+                    else
+                    {
+                        InsertRec(currentRoot.Right, wembleyEvent);
+                    }
+                }
+                else if (currentRoot.GetEventID() > wembleyEvent.EventID)
+                {
+                    if (currentRoot.Left == null)
+                    {
+                        currentRoot.Left = new EventNode(wembleyEvent);
+                    }
+                    else
+                    {
+                        InsertRec(currentRoot.Left, wembleyEvent);
+                    }
+                }
+
+            }
+
+            //Delete
+            public void Delete(WembleyEvent wembleyEvent)
+            {
+                root = DeleteRec(root, wembleyEvent.EventID);
+            }
+
+            private EventNode DeleteRec(EventNode currentRoot, int eventID)
+            {
+                // Base case: empty tree
+                if (currentRoot == null)
                 {
                     return null;
                 }
 
-                //Node with only one child
-                if (currentRoot.Left == null)
+                //Traverse the tree to find the node to delete
+                if (eventID < currentRoot.GetEventID())
                 {
-                    return currentRoot.Right;
+                    currentRoot.Left = DeleteRec(currentRoot.Left, eventID);
                 }
-                if (currentRoot.Right == null)
+                else if (eventID > currentRoot.GetEventID())
                 {
-                    return currentRoot.Left;
+                    currentRoot.Right = DeleteRec(currentRoot.Right, eventID);
                 }
-
-                //Node with two children
-                EventNode successor = FindMin(currentRoot.Right);
-                currentRoot.Event = successor.Event;
-                currentRoot.Right = DeleteRec(currentRoot.Right, successor.GetEventID());
-            }
-
-            return currentRoot;
-        }
-
-        private EventNode FindMin(EventNode node)
-        {
-            //Find the leftmost node in the subtree
-            while (node.Left != null)
-            {
-                node = node.Left;
-            }
-            return node;
-        }
-
-        //Searching
-        public EventNode FindEvent(int eventID)
-        {
-            return FindEventRec(root, eventID);
-        }
-
-        public EventNode FindEventRec(EventNode currentRoot, int eventID)
-        {
-            if (currentRoot.GetEventID() < eventID)
-            {
-                if (currentRoot.Right != null)
+                else
                 {
-                    if (currentRoot.Right.GetEventID() == eventID)
+                    //Node with no children
+                    if (currentRoot.Left == null && currentRoot.Right == null)
+                    {
+                        return null;
+                    }
+
+                    //Node with only one child
+                    if (currentRoot.Left == null)
                     {
                         return currentRoot.Right;
                     }
-                    else
-                    {
-                        return FindEventRec(currentRoot.Right, eventID);
-                    }
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            else if (currentRoot.GetEventID() > eventID)
-            {
-                if (currentRoot.Left != null)
-                {
-                    if (currentRoot.Left.GetEventID() == eventID)
+                    if (currentRoot.Right == null)
                     {
                         return currentRoot.Left;
                     }
+
+                    //Node with two children
+                    EventNode successor = FindMin(currentRoot.Right);
+                    currentRoot.Event = successor.Event;
+                    currentRoot.Right = DeleteRec(currentRoot.Right, successor.GetEventID());
+                }
+
+                return currentRoot;
+            }
+
+            private EventNode FindMin(EventNode node)
+            {
+                //Find the leftmost node in the subtree
+                while (node.Left != null)
+                {
+                    node = node.Left;
+                }
+                return node;
+            }
+
+            //Searching
+            public EventNode FindEvent(int eventID)
+            {
+                return FindEventRec(root, eventID);
+            }
+
+            public EventNode FindEventRec(EventNode currentRoot, int eventID)
+            {
+                if (currentRoot.GetEventID() < eventID)
+                {
+                    if (currentRoot.Right != null)
+                    {
+                        if (currentRoot.Right.GetEventID() == eventID)
+                        {
+                            return currentRoot.Right;
+                        }
+                        else
+                        {
+                            return FindEventRec(currentRoot.Right, eventID);
+                        }
+                    }
                     else
                     {
-                        return FindEventRec(currentRoot.Left, eventID);
+                        return null;
+                    }
+                }
+                else if (currentRoot.GetEventID() > eventID)
+                {
+                    if (currentRoot.Left != null)
+                    {
+                        if (currentRoot.Left.GetEventID() == eventID)
+                        {
+                            return currentRoot.Left;
+                        }
+                        else
+                        {
+                            return FindEventRec(currentRoot.Left, eventID);
+                        }
+                    }
+                    else
+                    {
+                        return null;
                     }
                 }
                 else
                 {
+                    return currentRoot;
+                }
+
+            }
+
+            //Rebalancing Tree
+            private void Rebalance()
+            {
+
+                if (root == null)
+                {
+                    return;
+                }
+
+                //Get all events in sorted order
+                int size = GetSize();
+                WembleyEvent[] events = new WembleyEvent[size];
+                int index = 0;
+                GetAll(root, events, ref index);
+
+                //Rebuild tree from sorted array
+                root = BuildBalancedTree(events, 0, size - 1);
+            }
+
+            private EventNode BuildBalancedTree(WembleyEvent[] events, int start, int end)
+            {
+                //TODO maybe some improvement
+
+                if (start > end)
+                {
                     return null;
                 }
+
+                //Making the middle element root
+                int mid = start + (end - start) / 2;
+                EventNode node = new EventNode(events[mid]);
+
+                node.Left = BuildBalancedTree(events, start, mid - 1);
+                node.Right = BuildBalancedTree(events, mid + 1, end);
+
+                return node;
             }
-            else
+
+            //Get size of tree
+            public int GetSize()
             {
-                return currentRoot;
+                return GetSizeRec(root);
+            }
+
+            private int GetSizeRec(EventNode node)
+            {
+                if (node == null)
+                {
+                    return 0;
+                }
+
+                return 1 + GetSizeRec(node.Left) + GetSizeRec(node.Right);
+            }
+
+            //Get all events in array
+            public void GetAll(EventNode node, WembleyEvent[] events, ref int index)
+            {
+                if (node == null)
+                {
+                    return;
+                }
+
+                // In-order traversal (left, current, right)
+                GetAll(node.Left, events, ref index);
+                events[index] = node.Event;
+                index++;
+                GetAll(node.Right, events, ref index);
+            }
+
+            //Printing Tree
+            public void Print()
+            {
+                PrintRec(root, "", false);
+            }
+
+            private void PrintRec(EventNode node, string indent, bool isLeft)
+            {
+                if (node == null)
+                {
+                    Console.WriteLine(indent + (isLeft ? "└── " : "┌── ") + "∅");
+                    return;
+                }
+
+                // Print right subtree
+                if (node.Right != null)
+                {
+                    PrintRec(node.Right, indent + (isLeft ? "    " : "│   "), false);
+                }
+                else
+                {
+                    Console.WriteLine(indent + (isLeft ? "    " : "│   ") + "┌── ∅");
+                }
+
+                // Print current node
+                Console.WriteLine(indent + (isLeft ? "└── " : "┌── ") + $"{node.GetEventID()}");
+
+                // Print left subtree
+                if (node.Left != null)
+                {
+                    PrintRec(node.Left, indent + (isLeft ? "│   " : "    "), true);
+                }
+                else
+                {
+                    Console.WriteLine(indent + (isLeft ? "│   " : "    ") + "└── ∅");
+                }
             }
 
         }
 
-        //Rebalancing Tree
-        private void Rebalance()
+        public class WembleyEvent
         {
+            public int EventID { get; set; } // Unique identifier for the event
+            public int BusinessID { get; set; } // Tracks who owns the event
+            public string EventName { get; set; } // Name of the event (Tottnham vs Arsenal)
+            public DateTime EventDate { get; set; } // Date and time of the event
+            public string EventType { get; set; } // Type of event (Football, Concert)
+            public int Attendance { get; set; } // Number of attendees expected or recorded for the event
+            public int EventPrice { get; set; } // Price of the event ticket in GBP
 
-            if (root == null)
+            public WembleyEvent(int EventID, int businessID, string eventName, DateTime eventDate, string eventType, int attendance, int eventPrice)
             {
-                return;
-            }
-
-            //Get all events in sorted order
-            int size = GetSize();
-            WembleyEvent[] events = new WembleyEvent[size];
-            int index = 0;
-            GetAll(root, events, ref index);
-
-            //Rebuild tree from sorted array
-            root = BuildBalancedTree(events, 0, size - 1);
-        }
-
-        private EventNode BuildBalancedTree(WembleyEvent[] events, int start, int end)
-        {
-            //TODO maybe some improvement
-
-            if (start > end)
-            {
-                return null;
-            }
-
-            //Making the middle element root
-            int mid = start + (end - start) / 2;
-            EventNode node = new EventNode(events[mid]);
-
-            node.Left = BuildBalancedTree(events, start, mid - 1);
-            node.Right = BuildBalancedTree(events, mid + 1, end);
-
-            return node;
-        }
-
-        //Get size of tree
-        public int GetSize()
-        {
-            return GetSizeRec(root);
-        }
-
-        private int GetSizeRec(EventNode node)
-        {
-            if (node == null)
-            {
-                return 0;
-            }
-
-            return 1 + GetSizeRec(node.Left) + GetSizeRec(node.Right);
-        }
-
-        //Get all events in array
-        public void GetAll(EventNode node, WembleyEvent[] events, ref int index)
-        {
-            if (node == null)
-            {
-                return;
-            }
-
-            // In-order traversal (left, current, right)
-            GetAll(node.Left, events, ref index);
-            events[index] = node.Event;
-            index++;
-            GetAll(node.Right, events, ref index);
-        }
-
-        //Printing Tree
-        public void Print()
-        {
-            PrintRec(root, "", false);
-        }
-
-        private void PrintRec(EventNode node, string indent, bool isLeft)
-        {
-            if (node == null)
-            {
-                Console.WriteLine(indent + (isLeft ? "└── " : "┌── ") + "∅");
-                return;
-            }
-
-            // Print right subtree
-            if (node.Right != null)
-            {
-                PrintRec(node.Right, indent + (isLeft ? "    " : "│   "), false);
-            }
-            else
-            {
-                Console.WriteLine(indent + (isLeft ? "    " : "│   ") + "┌── ∅");
-            }
-
-            // Print current node
-            Console.WriteLine(indent + (isLeft ? "└── " : "┌── ") + $"{node.GetEventID()}");
-
-            // Print left subtree
-            if (node.Left != null)
-            {
-                PrintRec(node.Left, indent + (isLeft ? "│   " : "    "), true);
-            }
-            else
-            {
-                Console.WriteLine(indent + (isLeft ? "│   " : "    ") + "└── ∅");
+                this.EventID = EventID;
+                this.BusinessID = businessID;
+                this.EventName = eventName;
+                this.EventDate = eventDate;
+                this.EventType = eventType;
+                this.Attendance = attendance;
+                this.EventPrice = eventPrice;
             }
         }
 
-    }
-
-    public class WembleyEvent
-    {
-        public int EventID { get; set; } // Unique identifier for the event
-        public int BusinessID { get; set; } // Tracks who owns the event
-        public string EventName { get; set; } // Name of the event (Tottnham vs Arsenal)
-        public DateTime EventDate { get; set; } // Date and time of the event
-        public string EventType { get; set; } // Type of event (Football, Concert)
-        public int Attendance { get; set; } // Number of attendees expected or recorded for the event
-        public int EventPrice { get; set; } // Price of the event ticket in GBP
-
-        public WembleyEvent(int EventID, int businessID, string eventName, DateTime eventDate, string eventType, int attendance, int eventPrice)
+        public class EventManagementSystem
         {
-            this.EventID = EventID;
-            this.BusinessID = businessID;
-            this.EventName = eventName;
-            this.EventDate = eventDate;
-            this.EventType = eventType;
-            this.Attendance = attendance;
-            this.EventPrice = eventPrice;
-        }
-    }
+            //TODO: public for test should be private
+            public EventBinaryTree tree;
+            private DatabaseManager database;
 
-    public class EventManagementSystem
-    {
-        //TODO: public for test should be private
-        public EventBinaryTree tree;
-        private DatabaseManager database;
-
-        public EventManagementSystem()
-        {
-            tree = new EventBinaryTree();
-            database = new DatabaseManager();
-
-            LoadEventsFromDatabase();
-        }
-
-        public void LoadEventsFromDatabase()
-        {
-            database.LoadEventsIntoTree(tree);
-        }
-
-        public void AddEvent(WembleyEvent wembleyEvent)
-        {
-            wembleyEvent.EventID = tree.currentMaxEventID + 1; // Assign a new unique ID to the event
-
-            tree.Insert(wembleyEvent);
-            database.InsertEvent(wembleyEvent);
-        }
-
-        public void UpdateEvent(int eventId, WembleyEvent updatedEvent)
-        {
-            EventNode node = tree.FindEvent(eventId);
-            if (node != null)
+            public EventManagementSystem()
             {
-                node.Event.EventName = updatedEvent.EventName;
-                node.Event.EventDate = updatedEvent.EventDate;
-                node.Event.EventType = updatedEvent.EventType;
-                node.Event.Attendance = updatedEvent.Attendance;
-                node.Event.EventPrice = updatedEvent.EventPrice;
+                tree = new EventBinaryTree();
+                database = new DatabaseManager();
 
-                database.UpdateEvent(node.Event);
+                LoadEventsFromDatabase();
+            }
+
+            public void LoadEventsFromDatabase()
+            {
+                database.LoadEventsIntoTree(tree);
+            }
+
+            public void AddEvent(WembleyEvent wembleyEvent)
+            {
+                wembleyEvent.EventID = tree.currentMaxEventID + 1; // Assign a new unique ID to the event
+
+                tree.Insert(wembleyEvent);
+                database.InsertEvent(wembleyEvent);
+            }
+
+            public void UpdateEvent(int eventId, WembleyEvent updatedEvent)
+            {
+                EventNode node = tree.FindEvent(eventId);
+                if (node != null)
+                {
+                    node.Event.EventName = updatedEvent.EventName;
+                    node.Event.EventDate = updatedEvent.EventDate;
+                    node.Event.EventType = updatedEvent.EventType;
+                    node.Event.Attendance = updatedEvent.Attendance;
+                    node.Event.EventPrice = updatedEvent.EventPrice;
+
+                    database.UpdateEvent(node.Event);
+                }
+            }
+
+            public void DeleteEvent(int eventId)
+            {
+                EventNode node = tree.FindEvent(eventId);
+                if (node != null)
+                {
+                    tree.Delete(node.Event);
+                    database.DeleteEvent(eventId);
+                }
+            }
+
+            public WembleyEvent GetEvent(int eventId)
+            {
+                EventNode node = tree.FindEvent(eventId);
+                return node != null ? node.Event : null;
+            }
+
+            public WembleyEvent[] GetAllEvents()
+            {
+                int size = tree.GetSize();
+                WembleyEvent[] events = new WembleyEvent[size];
+                int index = 0;
+                tree.GetAll(tree.GetRoot(), events, ref index);
+                return events;
             }
         }
 
-        public void DeleteEvent(int eventId)
-        {            
-            EventNode node = tree.FindEvent(eventId);
-            if (node != null)
+        //User Part
+        public class UserNode
+        {
+            public User User { get; set; }
+            public UserNode Next { get; set; } //pointer to the next node in the linked list
+            public UserNode(User user)
             {
-                tree.Delete(node.Event);
-                database.DeleteEvent(eventId);
+                User = user;
+                Next = null;
             }
         }
 
-        public WembleyEvent GetEvent(int eventId)
+        public class UserLinkedList
         {
-            EventNode node = tree.FindEvent(eventId);
-            return node != null ? node.Event : null;
-        }
+            private UserNode root;
+            private int currentMaxUserID = 0; // To keep track of the current maximum user ID for assigning new IDs
 
-        public WembleyEvent[] GetAllEvents()
-        {
-            int size = tree.GetSize();
-            WembleyEvent[] events = new WembleyEvent[size];
-            int index = 0;
-            tree.GetAll(tree.GetRoot(), events, ref index);
-            return events;
-        }
-    }
-
-    //User Part
-    public class UserNode
-    {
-        public User User { get; set; }
-        public UserNode Next { get; set; } //pointer to the next node in the linked list
-        public UserNode(User user)
-        {
-            User = user;
-            Next = null;
-        }
-    }
-
-    public class UserLinkedList
-    {
-        private UserNode root;
-        private int currentMaxUserID = 0; // To keep track of the current maximum user ID for assigning new IDs
-
-        public UserLinkedList()
-        {
-            root = null;
-        }
-
-        public void AddUser(User user)
-        {
-            UserNode newNode = new UserNode(user);
-
-            if (root == null)
+            public UserLinkedList()
             {
-                root = newNode;
-                currentMaxUserID = user.UserID;
+                root = null;
             }
-            else
-            {
-                user.UserID = currentMaxUserID + 1; // Assign a new unique ID to the user
-                currentMaxUserID = user.UserID;
 
-                //traverse to the end of the list and add the new node
+            public void AddUser(User user)
+            {
+                UserNode newNode = new UserNode(user);
+
+                if (root == null)
+                {
+                    root = newNode;
+                    currentMaxUserID = user.UserID;
+                }
+                else
+                {
+                    user.UserID = currentMaxUserID + 1; // Assign a new unique ID to the user
+                    currentMaxUserID = user.UserID;
+
+                    //traverse to the end of the list and add the new node
+                    UserNode current = root;
+                    while (current.Next != null)
+                    {
+                        current = current.Next;
+                    }
+
+                    current.Next = newNode;
+                }
+            }
+
+            public void UpdateUser(int userId, User updatedUser)
+            {
+                //traverse the list to find the user and update the information
+                UserNode current = root;
+                while (current != null)
+                {
+                    if (current.User.UserID == userId)
+                    {
+                        current.User = updatedUser;
+                        return;
+                    }
+
+                    current = current.Next;
+                }
+            }
+
+            public void DeleteUser(int userId)
+            {
+                if (root == null) return;
+
+                //if the root node is the one to delete get the next node and make it the new root
+                if (root.User.UserID == userId)
+                {
+                    root = root.Next;
+                    return;
+                }
+
+                //traverse the list to find the user and delete it by changing the next pointer of the previous node to skip the deleted node
                 UserNode current = root;
                 while (current.Next != null)
                 {
+                    if (current.Next.User.UserID == userId)
+                    {
+                        current.Next = current.Next.Next;
+                        return;
+                    }
+                    current = current.Next;
+                }
+            }
+
+            public User GetUser(int userId)
+            {
+                UserNode current = root;
+                while (current != null)
+                {
+                    if (current.User.UserID == userId)
+                    {
+                        return current.User;
+                    }
+                    current = current.Next;
+                }
+                return null; // Not found
+            }
+
+            public UserNode[] GetAllUsers()
+            {
+                //traverse the list to count the number of users and store them in an array
+                int size = 0;
+                UserNode current = root;
+                while (current != null)
+                {
+                    size++;
                     current = current.Next;
                 }
 
-                current.Next = newNode;
-            }
-        }
-
-        public void UpdateUser(int userId, User updatedUser)
-        {
-            //traverse the list to find the user and update the information
-            UserNode current = root;
-            while (current != null)
-            {
-                if (current.User.UserID == userId)
+                //create an array of the correct size and fill it with the users
+                UserNode[] users = new UserNode[size];
+                current = root;
+                int index = 0;
+                while (current != null)
                 {
-                    current.User = updatedUser;
-                    return;
+                    users[index++] = current;
+                    current = current.Next;
                 }
 
-                current = current.Next;
+                return users;
             }
+
         }
 
-        public void DeleteUser(int userId)
+        public class User
         {
-            if (root == null) return;
+            public int UserID { get; set; } // Unique identifier for the user
+            public string Username { get; set; } // Name of the user
+            public string Email { get; set; } // Email address of the user
+            public string Password { get; set; } // Password for user authentication
+            public string UserRole { get; set; } // Admin, Client, Unverified_Business, Verified_Business
 
-            //if the root node is the one to delete get the next node and make it the new root
-            if (root.User.UserID == userId)
+            public User()
             {
-                root = root.Next;
-                return;
+
+            }
+        }
+        //Purchase class to store the purchase information when a user buys a ticket for an event
+        public class Purchase
+        {
+            public int PurchaseID { get; set; } // Unique identifier for the purchase
+            public int UserID { get; set; } // ID of the user who made the purchase
+            public int EventID { get; set; } // ID of the event that was purchased
+            public string EventName { get; set; } // Name of the event that was purchased
+            public DateTime PurchaseDate { get; set; } // Date and time of the purchase
+            public DateTime EventDate { get; set; } // Date and time of the event
+            public int EventPrice { get; set; } // Price of the event at the time of purchase
+            public string EventType { get; set; } // Type of the event at the time of purchase
+
+        }
+
+        public class UserManagementSystem
+        {
+            private UserLinkedList userList;
+            private DatabaseManager database;
+
+            public UserManagementSystem()
+            {
+                userList = new UserLinkedList();
+                database = new DatabaseManager();
+
+                LoadFromDatabase();
             }
 
-            //traverse the list to find the user and delete it by changing the next pointer of the previous node to skip the deleted node
-            UserNode current = root;
-            while (current.Next != null)
+            public void LoadFromDatabase()
             {
-                if (current.Next.User.UserID == userId)
+                database.LoadUsersIntoList(userList);
+            }
+
+            public void RegisterUser(User user)
+            {
+                userList.AddUser(user);
+                database.InsertUser(user);
+            }
+
+            public void UpdateUser(int userId, User updatedUser)
+            {
+                userList.UpdateUser(userId, updatedUser);
+                database.UpdateUser(updatedUser);
+            }
+
+            public void DeleteUser(int userId)
+            {
+                userList.DeleteUser(userId);
+                database.DeleteUser(userId);
+            }
+
+            public User GetUser(int userId)
+            {
+                return userList.GetUser(userId);
+            }
+
+            public UserNode[] GetAllUsers()
+            {
+                return userList.GetAllUsers();
+            }
+
+            public void PrintAllUsers()
+            {
+                UserNode[] users = userList.GetAllUsers();
+                foreach (var userNode in users)
                 {
-                    current.Next = current.Next.Next;
-                    return;
-                }
-                current = current.Next;
-            }
-        }
-
-        public User GetUser(int userId)
-        {
-            UserNode current = root;
-            while (current != null)
-            {
-                if (current.User.UserID == userId)
-                {
-                    return current.User;
-                }
-                current = current.Next;
-            }
-            return null; // Not found
-        }
-
-        public UserNode[] GetAllUsers()
-        {
-            //traverse the list to count the number of users and store them in an array
-            int size = 0;
-            UserNode current = root;
-            while (current != null)
-            {
-                size++;
-                current = current.Next;
-            }
-
-            //create an array of the correct size and fill it with the users
-            UserNode[] users = new UserNode[size];
-            current = root;
-            int index = 0;
-            while (current != null)
-            {
-                users[index++] = current;
-                current = current.Next;
-            }
-
-            return users;
-        }
-
-    }
-
-    public class User
-    {
-        public int UserID { get; set; } // Unique identifier for the user
-        public string Username { get; set; } // Name of the user
-        public string Email { get; set; } // Email address of the user
-        public string Password { get; set; } // Password for user authentication
-        public string UserRole { get; set; } // Admin, Client, Unverified_Business, Verified_Business
-
-        public User()
-        {
-
-        }
-    }
-
-    public class UserManagementSystem
-    {
-        private UserLinkedList userList;
-        private DatabaseManager database;
-
-        public UserManagementSystem()
-        {
-            userList = new UserLinkedList();
-            database = new DatabaseManager();
-
-            LoadFromDatabase();
-        }
-
-        public void LoadFromDatabase()
-        {
-            database.LoadUsersIntoList(userList);
-        }
-
-        public void RegisterUser(User user)
-        {
-            userList.AddUser(user);
-            database.InsertUser(user);
-        }
-
-        public void UpdateUser(int userId, User updatedUser)
-        {
-            userList.UpdateUser(userId, updatedUser);
-            database.UpdateUser(updatedUser);
-        }
-
-        public void DeleteUser(int userId)
-        {
-            userList.DeleteUser(userId);
-            database.DeleteUser(userId);
-        }
-
-        public User GetUser(int userId)
-        {
-            return userList.GetUser(userId);
-        }
-
-        public UserNode[] GetAllUsers()
-        {
-            return userList.GetAllUsers();
-        }
-
-        public void PrintAllUsers()
-        {
-            UserNode[] users = userList.GetAllUsers();
-            foreach (var userNode in users)
-            {
-                Console.WriteLine($"UserID: {userNode.User.UserID}, Username: {userNode.User.Username}, Email: {userNode.User.Email}, Role: {userNode.User.UserRole}");
-            }
-        }
-
-        //Method to match username and password
-        //Returns null if no match is found
-
-        public User FindByCredentials(string username, string password)
-        {
-            UserNode[] users = userList.GetAllUsers();
-            //Check every user in the linked list to find a match
-            foreach (var node in users)
-            {
-                if (string.Equals(node.User.Username, username, StringComparison.OrdinalIgnoreCase) && node.User.Password == password)
-                {
-                    return node.User;
+                    Console.WriteLine($"UserID: {userNode.User.UserID}, Username: {userNode.User.Username}, Email: {userNode.User.Email}, Role: {userNode.User.UserRole}");
                 }
             }
-            //No match found
-            return null;
-        }
 
-        //Method to check if the username already exists
-        //Return true if it exists, false if does not exist
+            //Method to match username and password
+            //Returns null if no match is found
 
-        public bool UsernameExists(string username)
-        {
-
-            UserNode[] users = userList.GetAllUsers();
-
-            foreach (var node in users)
+            public User FindByCredentials(string username, string password)
             {
-
-                if (string.Equals(node.User.Username, username, StringComparison.OrdinalIgnoreCase))
+                UserNode[] users = userList.GetAllUsers();
+                //Check every user in the linked list to find a match
+                foreach (var node in users)
                 {
-                    return true;
+                    if (string.Equals(node.User.Username, username, StringComparison.OrdinalIgnoreCase) && node.User.Password == password)
+                    {
+                        return node.User;
+                    }
                 }
+                //No match found
+                return null;
             }
-            return false;
+
+            //Method to check if the username already exists
+            //Return true if it exists, false if does not exist
+
+            public bool UsernameExists(string username)
+            {
+
+                UserNode[] users = userList.GetAllUsers();
+
+                foreach (var node in users)
+                {
+
+                    if (string.Equals(node.User.Username, username, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
         }
-    }
 
-    //Main Program
-    public static class Program
-    {
-
-        public static void Main()
+        //Main Program
+        public static class Program
         {
-            //Wembley Event Binary tree test
 
-            /*
-            EventBinaryTree eventBinaryTree = new EventBinaryTree();
-
-            for (int i = 0; i < 10; ++i)
+            public static void Main()
             {
-                eventBinaryTree.Insert(new WembleyEvent(i));
+                //Wembley Event Binary tree test
+
+                /*
+                EventBinaryTree eventBinaryTree = new EventBinaryTree();
+
+                for (int i = 0; i < 10; ++i)
+                {
+                    eventBinaryTree.Insert(new WembleyEvent(i));
+                }
+
+                eventBinaryTree.Print();
+
+                EventNode test = eventBinaryTree.FindEvent(8);
+
+                Console.WriteLine("Found Node is " + test.GetEventID().ToString());
+
+                Console.WriteLine("-------------------");
+
+                eventBinaryTree.Delete(eventBinaryTree.FindEvent(5).Event);
+
+                eventBinaryTree.Print();
+
+                //User Linked List test
+                UserManagementSystem userManagementSystem = new UserManagementSystem();
+
+                for (int i = 0; i < 10; ++i)
+                {
+                    userManagementSystem.RegisterUser(new User() { UserID = i, Username = "User" + i });
+                }
+
+                userManagementSystem.PrintAllUsers();
+
+                userManagementSystem.UpdateUser(5, new User() { UserID = 5, Username = "UpdatedUser5" });
+
+                userManagementSystem.DeleteUser(3);
+
+                Console.WriteLine("-------------------");
+
+                Console.WriteLine("Get User with ID 5: " + userManagementSystem.GetUser(5)?.Username);
+
+                Console.ReadLine();
+
+                userManagementSystem.PrintAllUsers();
+                */
+
+                //Load events from database
+                EventManagementSystem eventManagementSystem = new EventManagementSystem();
+
+                //TEST DO NOT UNCOMMENT except you want to test the db functions
+                //EventID is auto generated so we can just set it to 0 when creating a new event and the system will assign a new unique ID to it
+
+                //WembleyEvent newEvent = new WembleyEvent(0,"Test Event", DateTime.Now, "Football", 0, 50);
+                //eventManagementSystem.AddEvent(newEvent);
+
+                //eventManagementSystem.DeleteEvent(101);
+
+                //eventManagementSystem.UpdateEvent(103, new WembleyEvent(0,"Updated Test Event", DateTime.Now, "Football", 0, 50));
+
+                eventManagementSystem.tree.Print();
+
+                UserManagementSystem userManagementSystem = new UserManagementSystem();
+
+                User newUser = new User()
+                {
+                    Username = "TestUser",
+                    Email = "test@gmail.com",
+                    Password = "password123",
+                    UserRole = "Client"
+                };
+
+                //userManagementSystem.RegisterUser(newUser);
+
+                newUser.Username = "UpdatedTestUser";
+                //userManagementSystem.UpdateUser(2, newUser);
+
+                //userManagementSystem.DeleteUser(5);
+
+                //UI
+                //Changed after reduce our .NET version
+                Application.EnableVisualStyles();
+                Application.SetCompatibleTextRenderingDefault(false);
+
+                //Login Form
+                //Application.Run(new LoginUser.LoginForm(userManagementSystem, eventManagementSystem));
+
+                //Register Form
+                //Application.Run(new RegisterUser.RegisterFormClient(userManagementSystem));
+
+                //Business Register Form
+                //Application.Run(new RegisterFormBusiness(userManagementSystem));
+
+                //Client Form
+                Application.Run(new ClientForm(eventManagementSystem, userManagementSystem));
+
+                //Admin Form
+                //Application.Run(new AdminUser.AdminBusinessForm(eventManagementSystem, userManagementSystem, new User() { UserRole = "Admin" }));
             }
-
-            eventBinaryTree.Print();
-
-            EventNode test = eventBinaryTree.FindEvent(8);
-
-            Console.WriteLine("Found Node is " + test.GetEventID().ToString());
-
-            Console.WriteLine("-------------------");
-
-            eventBinaryTree.Delete(eventBinaryTree.FindEvent(5).Event);
-
-            eventBinaryTree.Print();
-
-            //User Linked List test
-            UserManagementSystem userManagementSystem = new UserManagementSystem();
-
-            for (int i = 0; i < 10; ++i)
-            {
-                userManagementSystem.RegisterUser(new User() { UserID = i, Username = "User" + i });
-            }
-
-            userManagementSystem.PrintAllUsers();
-
-            userManagementSystem.UpdateUser(5, new User() { UserID = 5, Username = "UpdatedUser5" });
-
-            userManagementSystem.DeleteUser(3);
-
-            Console.WriteLine("-------------------");
-
-            Console.WriteLine("Get User with ID 5: " + userManagementSystem.GetUser(5)?.Username);
-
-            Console.ReadLine();
-
-            userManagementSystem.PrintAllUsers();
-            */
-
-            //Load events from database
-            EventManagementSystem eventManagementSystem = new EventManagementSystem();
-
-            //TEST DO NOT UNCOMMENT except you want to test the db functions
-            //EventID is auto generated so we can just set it to 0 when creating a new event and the system will assign a new unique ID to it
-
-            //WembleyEvent newEvent = new WembleyEvent(0,"Test Event", DateTime.Now, "Football", 0, 50);
-            //eventManagementSystem.AddEvent(newEvent);
-
-            //eventManagementSystem.DeleteEvent(101);
-
-            //eventManagementSystem.UpdateEvent(103, new WembleyEvent(0,"Updated Test Event", DateTime.Now, "Football", 0, 50));
-
-            eventManagementSystem.tree.Print();
-
-            UserManagementSystem userManagementSystem = new UserManagementSystem();
-
-            User newUser = new User()
-            {
-                Username = "TestUser",
-                Email = "test@gmail.com",
-                Password = "password123",
-                UserRole = "Client"
-            };
-
-            //userManagementSystem.RegisterUser(newUser);
-
-            newUser.Username = "UpdatedTestUser";
-            //userManagementSystem.UpdateUser(2, newUser);
-
-            //userManagementSystem.DeleteUser(5);
-
-            //UI
-            //Changed after reduce our .NET version
-            Application.EnableVisualStyles();
-            Application.SetCompatibleTextRenderingDefault(false);
-
-            //Login Form
-            //Application.Run(new LoginUser.LoginForm(userManagementSystem, eventManagementSystem));
-
-            //Register Form
-            //Application.Run(new RegisterUser.RegisterFormClient(userManagementSystem));
-
-            //Business Register Form
-            //Application.Run(new RegisterFormBusiness(userManagementSystem));
-
-            //Client Form
-            Application.Run(new ClientForm(eventManagementSystem, userManagementSystem));
-
-            //Admin Form
-            //Application.Run(new AdminUser.AdminBusinessForm(eventManagementSystem, userManagementSystem, new User() { UserRole = "Admin" }));
         }
     }
-}
