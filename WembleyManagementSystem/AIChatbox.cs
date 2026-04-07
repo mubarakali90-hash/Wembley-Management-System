@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WembleyManagementSystem;
 
 public class AIChatBox : UserControl
 {
@@ -87,29 +88,44 @@ public class AIChatBox : UserControl
     {
         if (string.IsNullOrEmpty(aiApiKey))
         {
-            await Task.Delay(300); // simulate delay
+            await Task.Delay(300);
             return "Simulated AI response (no API key provided).";
         }
 
-        using (var client = new HttpClient())
+        using (var httpClient = new HttpClient())
         {
-            client.DefaultRequestHeaders.Add("x-api-key", aiApiKey);
-            client.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
+            httpClient.DefaultRequestHeaders.Add("x-api-key", aiApiKey);
+            httpClient.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
+
+            // Get all events to give the AI context
+            string eventContext = "";
+            if (this.Parent is ClientForm clientForm)
+            {
+                var events = clientForm.GetEvents();
+                foreach (var ev in events)
+                {
+                    if (ev != null)
+                    {
+                        eventContext += $"- {ev.EventName} | {ev.EventDate:dd/MM/yyyy} | {ev.EventType} | £{ev.EventPrice} | Attendance: {ev.Attendance}\n";
+                    }
+                }
+            }
 
             var requestBody = new
             {
                 model = "claude-sonnet-4-20250514",
                 max_tokens = 200,
+                system = $"You are a helpful assistant for Wembley Stadium events. Only answer questions about the events listed below. If someone asks about something unrelated, politely redirect them to event-related topics, dont print all the events available if not requested\n\nCurrent events:\n{eventContext}",
                 messages = new[]
                 {
-                    new { role = "user", content = userMessage }
-                }
+            new { role = "user", content = userMessage }
+        }
             };
 
             var json = JsonSerializer.Serialize(requestBody);
-            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            var jsonContent = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
-            var response = await client.PostAsync("https://api.anthropic.com/v1/messages", content);
+            var response = await httpClient.PostAsync("https://api.anthropic.com/v1/messages", jsonContent);
 
             if (response.IsSuccessStatusCode)
             {
@@ -122,15 +138,14 @@ public class AIChatBox : UserControl
                     return text ?? "No response from AI.";
                 }
                 return "No response from AI.";
-              
             }
             else
             {
-                return $"Error: {response.StatusCode}";
+                string errorBody = await response.Content.ReadAsStringAsync();
+                return $"Error {response.StatusCode}: {errorBody}";
             }
         }
     }
-
     private void InitializeComponent()
     {
             this.SuspendLayout();

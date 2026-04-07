@@ -526,34 +526,9 @@ namespace WembleyManagementSystem
             UpdateLoginUI();
         }
 
-        //Method to allow other forms to access the current list of events from the system
         public WembleyEvent[] GetEvents()
         {
             return _system.GetAllEvents();
-        }
-
-        private void BtnMyTickets_Click(object sender, EventArgs e)
-        {
-            UserNode[] users = _userSystem.GetAllUsers();
-            User loggedInUser = null;
-
-            foreach (var userNode in users)
-            {
-                if (string.Equals(userNode.User.Username, _loggedInUsername, StringComparison.OrdinalIgnoreCase))
-                {
-                    loggedInUser = userNode.User;
-                    break;
-                }
-            }
-
-            if (_loggedInUsername == null)
-            {
-                MessageBox.Show("Please log in to view your tickets.", "Not Logged In", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            Purchase[] purchases = _database.GetPurchasesByUser(loggedInUser.UserID);
-            new MyTicketsForm(purchases, _loggedInUsername).ShowDialog();
         }
 
         private void UpdateLoginUI()
