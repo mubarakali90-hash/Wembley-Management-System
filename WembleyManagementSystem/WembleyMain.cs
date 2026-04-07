@@ -550,6 +550,32 @@ namespace WembleyManagementSystem
             btnMyTickets.Visible = loggedIn;
         }
 
+        private void BtnMyTickets_Click(object sender, EventArgs e)
+        {
+            // Find the logged-in user's ID
+            UserNode[] users = _userSystem.GetAllUsers();
+            User currentUser = null;
+
+            foreach (var userNode in users)
+            {
+                if (string.Equals(userNode.User.Username, _loggedInUsername, StringComparison.OrdinalIgnoreCase))
+                {
+                    currentUser = userNode.User;
+                    break;
+                }
+            }
+
+            if (currentUser == null)
+            {
+                MessageBox.Show("Please log in first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Get purchases from DB and show the tickets form
+            Purchase[] purchases = _database.GetPurchasesByUser(currentUser.UserID);
+            new MyTicketsForm(purchases, _loggedInUsername).ShowDialog();
+        }
+
         private void LoadEvents()
         {
             RefreshGrid(_system.GetAllEvents());
@@ -673,6 +699,16 @@ namespace WembleyManagementSystem
                 eventGrid.Columns.Add(buyCol);
             }
 
+        }
+
+        //Refreshes the event grid whenever the form becomes visible again
+        protected override void OnVisibleChanged(EventArgs e)
+        {
+            base.OnVisibleChanged(e);
+            if (this.Visible)
+            {
+                ApplySearch(); // This refreshes the grid with current data from the tree
+            }
         }
 
         private void ApplySearch()
