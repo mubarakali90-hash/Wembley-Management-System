@@ -4,9 +4,6 @@ using System.Drawing;
 using System.Windows.Forms;
 using WembleyManagementSystem;
 
-var aiChatBox = new AIChatBox(""); 
-aiChatBox.Dock = DockStyle.Right;
-this.Controls.Add(aiChatBox);
 
 namespace RegisterUser
 {

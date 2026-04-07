@@ -4,7 +4,9 @@
 		<TargetFramework>net48</TargetFramework>
 		<UseWindowsForms>true</UseWindowsForms>
 		<Nullable>disable</Nullable>
+		<LangVersion>8.0</LangVersion>
 	</PropertyGroup>
+
 	<ItemGroup>
 	  <PackageReference Include="System.Text.Json" Version="10.0.5" />
 	</ItemGroup>

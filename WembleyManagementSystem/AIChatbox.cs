@@ -59,68 +59,96 @@ public class AIChatBox : UserControl
         btnSend.Click += BtnSend_Click;
         aiPanel.Controls.Add(btnSend);
     }
-}
-
-private async void BtnSend_Click(object sender, EventArgs e)
-{
-    string userMessage = txtInput.Text.Trim();
-    if (string.IsNullOrEmpty(userMessage)) return;
-
-    txtChatHistory.AppendText("You: " + userMessage + Environment.NewLine);
-    txtInput.Clear();
-    btnSend.Enabled = false;
-
-    try
+    private async void BtnSend_Click(object sender, EventArgs e)
     {
-        string aiResponse = await SendMessageToAIAsync(userMessage);
-        txtChatHistory.AppendText("AI: " + aiResponse + Environment.NewLine);
-    }
-    catch (Exception ex)
-    {
-        txtChatHistory.AppendText("Error: " + ex.Message + Environment.NewLine);
-    }
+        string userMessage = txtInput.Text.Trim();
+        if (string.IsNullOrEmpty(userMessage)) return;
 
-    txtChatHistory.SelectionStart = txtChatHistory.Text.Length;
-    txtChatHistory.ScrollToCaret();
-    btnSend.Enabled = true;
-}
+        txtChatHistory.AppendText("You: " + userMessage + Environment.NewLine);
+        txtInput.Clear();
+        btnSend.Enabled = false;
 
-private async Task<string> SendMessageToAIAsync(string userMessage)
-{
-    if (string.IsNullOrEmpty(aiApiKey))
-    {
-        await Task.Delay(300); // simulate delay
-        return "Simulated AI response (no API key provided).";
-    }
-
-    using (var client = new HttpClient())
-    {
-        client.DefaultRequestHeaders.Authorization =
-            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", aiApiKey);
-
-        var requestBody = new
+        try
         {
-            model = "claude-2",
-            prompt = userMessage,
-            max_tokens_to_sample = 200
-        };
-
-        var json = JsonSerializer.Serialize(requestBody);
-        var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-
-        var response = await client.PostAsync("https://api.anthropic.com/v1/complete", content);
-
-        if (response.IsSuccessStatusCode)
-        {
-            var responseJson = await response.Content.ReadAsStringAsync();
-            using JsonDocument doc = JsonDocument.Parse(responseJson);
-            var completion = doc.RootElement.GetProperty("completion").GetString();
-            return completion ?? "No response from AI.";
+            string aiResponse = await SendMessageToAIAsync(userMessage);
+            txtChatHistory.AppendText("AI: " + aiResponse + Environment.NewLine);
         }
-        else
+        catch (Exception ex)
         {
-            return $"Error: {response.StatusCode}";
+            txtChatHistory.AppendText("Error: " + ex.Message + Environment.NewLine);
+        }
+
+        txtChatHistory.SelectionStart = txtChatHistory.Text.Length;
+        txtChatHistory.ScrollToCaret();
+        btnSend.Enabled = true;
+    }
+
+    private async Task<string> SendMessageToAIAsync(string userMessage)
+    {
+        if (string.IsNullOrEmpty(aiApiKey))
+        {
+            await Task.Delay(300); // simulate delay
+            return "Simulated AI response (no API key provided).";
+        }
+
+        using (var client = new HttpClient())
+        {
+            client.DefaultRequestHeaders.Add("x-api-key", aiApiKey);
+            client.DefaultRequestHeaders.Add("anthropic-version", "2023-06-01");
+
+            var requestBody = new
+            {
+                model = "claude-sonnet-4-20250514",
+                max_tokens = 200,
+                messages = new[]
+                {
+                    new { role = "user", content = userMessage }
+                }
+            };
+
+            var json = JsonSerializer.Serialize(requestBody);
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+            var response = await client.PostAsync("https://api.anthropic.com/v1/messages", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var responseJson = await response.Content.ReadAsStringAsync();
+                using JsonDocument doc = JsonDocument.Parse(responseJson);
+                var contentArray = doc.RootElement.GetProperty("content");
+                if (contentArray.GetArrayLength() > 0)
+                {
+                    var text = contentArray[0].GetProperty("text").GetString();
+                    return text ?? "No response from AI.";
+                }
+                return "No response from AI.";
+              
+            }
+            else
+            {
+                return $"Error: {response.StatusCode}";
+            }
         }
     }
+
+    private void InitializeComponent()
+    {
+            this.SuspendLayout();
+            // 
+            // AIChatBox
+            // 
+            this.Name = "AIChatBox";
+            this.Load += new System.EventHandler(this.AIChatBox_Load);
+            this.ResumeLayout(false);
+
+    }
+
+    private void AIChatBox_Load(object sender, EventArgs e)
+    {
+
+    }
 }
+
+
+
 
