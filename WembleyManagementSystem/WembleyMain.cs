@@ -486,11 +486,48 @@ namespace WembleyManagementSystem
             this.Controls.Add(topPanel);
 
 
-            //AI Chatbox 
+            // AI Chatbox
             var chatBox = new AIChatBox(ConfigurationManager.AppSettings["AIkey"]);
-            chatBox.Dock = DockStyle.Right;
-            chatBox.Width = 300;
+            chatBox.Size = new Size(300, 380);
+
+            // Position it at the bottom right
+            chatBox.Location = new Point(this.ClientSize.Width - 320, this.ClientSize.Height - 440);
+            chatBox.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            chatBox.BorderStyle = BorderStyle.FixedSingle;
+            chatBox.Visible = false;
+
+            // Create the Chat Toggle Button for the bottom right corner
+            Button btnToggleChat = new Button
+            {
+                Text = "💬 AI Chat",
+                Size = new Size(90, 40),
+                Location = new Point(this.ClientSize.Width - 110, this.ClientSize.Height - 60),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+                BackColor = Color.FromArgb(255, 190, 0),
+                ForeColor = Color.FromArgb(0, 55, 115),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnToggleChat.FlatAppearance.BorderSize = 0;
+
+            // Click event to dynamically open and close the chat
+            btnToggleChat.Click += (s, ev) =>
+            {
+                chatBox.Visible = !chatBox.Visible;
+                if (chatBox.Visible)
+                {
+                    chatBox.BringToFront(); // Makes sure it pops up over the data grid
+                }
+            };
+
+            // Add both controls to the form
             this.Controls.Add(chatBox);
+            this.Controls.Add(btnToggleChat);
+
+            // Forces them to render on top of all other elements
+            chatBox.BringToFront();
+            btnToggleChat.BringToFront();
 
             LoadEvents();
 

@@ -178,6 +178,41 @@ namespace AdminUser
                 GridColor = Color.FromArgb(225, 230, 240)
             };
 
+            // AI Chatbox
+            var chatBox = new AIChatBox(System.Configuration.ConfigurationManager.AppSettings["AIkey"]);
+            chatBox.Size = new Size(300, 380);
+            chatBox.Location = new Point(this.ClientSize.Width - 320, this.ClientSize.Height - 440);
+            chatBox.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            chatBox.BorderStyle = BorderStyle.FixedSingle;
+            chatBox.Visible = false;
+
+            // Inject the systems so the AI can execute commands
+            chatBox.EventSystem = _eventSystem;
+            chatBox.CurrentUser = _currentUser;
+
+            Button btnToggleChat = new Button
+            {
+                Text = "💬 AI Assistant",
+                Size = new Size(110, 40),
+                Location = new Point(this.ClientSize.Width - 130, this.ClientSize.Height - 60),
+                Anchor = AnchorStyles.Bottom | AnchorStyles.Right,
+                BackColor = Color.FromArgb(255, 190, 0),
+                ForeColor = Color.FromArgb(0, 55, 115),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnToggleChat.FlatAppearance.BorderSize = 0;
+            btnToggleChat.Click += (s, ev) =>
+            {
+                chatBox.Visible = !chatBox.Visible;
+                if (chatBox.Visible) chatBox.BringToFront();
+            };
+
+            this.Controls.Add(chatBox);
+            this.Controls.Add(btnToggleChat);
+            chatBox.BringToFront();
+            btnToggleChat.BringToFront();
             this.Controls.Add(dgvEvents);
             this.Controls.Add(toolbarPanel);
             this.Controls.Add(headerPanel);
@@ -200,6 +235,11 @@ namespace AdminUser
 
             if (dgvEvents.Columns.Contains("EventID")) dgvEvents.Columns["EventID"].Visible = false;
             if (dgvEvents.Columns.Contains("BusinessID")) dgvEvents.Columns["BusinessID"].Visible = false;
+        }
+
+        public void RefreshGrid()
+        {
+            LoadEvents();
         }
 
         private void BtnAddEvent_Click(object sender, EventArgs e)
