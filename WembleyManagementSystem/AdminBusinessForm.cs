@@ -18,6 +18,8 @@ namespace AdminUser
         private Button btnDeleteEvent;
         private Button btnManageUsers;
         private readonly Form _lastOpenedForm;
+        private string _sortColumn = "EventDate";
+        private bool _sortAscending = true;
 
         public AdminBusinessForm(EventManagementSystem eventSystem, UserManagementSystem userSystem, User currentUser, Form lastOpenedForm = null)
         {
@@ -175,7 +177,33 @@ namespace AdminUser
                 RowHeadersVisible = false,
                 BorderStyle = BorderStyle.None,
                 BackgroundColor = Color.White,
-                GridColor = Color.FromArgb(225, 230, 240)
+                GridColor = Color.FromArgb(220, 228, 245),
+                CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal
+            };
+
+            dgvEvents.EnableHeadersVisualStyles = false;
+            dgvEvents.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(0, 55, 115);
+            dgvEvents.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
+            dgvEvents.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+            dgvEvents.ColumnHeadersDefaultCellStyle.Padding = new Padding(6, 0, 0, 0);
+            dgvEvents.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            dgvEvents.ColumnHeadersHeight = 34;
+            dgvEvents.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(242, 246, 255);
+            dgvEvents.DefaultCellStyle.Padding = new Padding(6, 3, 6, 3);
+            dgvEvents.DefaultCellStyle.SelectionBackColor = Color.FromArgb(195, 215, 255);
+            dgvEvents.DefaultCellStyle.SelectionForeColor = Color.FromArgb(20, 30, 50);
+
+            // Merge Sort to the column header click
+            dgvEvents.ColumnHeaderMouseClick += (s, e) =>
+            {
+                string clickedCol = dgvEvents.Columns[e.ColumnIndex].DataPropertyName;
+                if (string.IsNullOrEmpty(clickedCol)) return; // Ignore columns without properties
+
+                // Toggle ascending/descending
+                if (_sortColumn == clickedCol) _sortAscending = !_sortAscending;
+                else { _sortColumn = clickedCol; _sortAscending = true; }
+
+                LoadEvents(); // Refresh grid with new sort
             };
 
             // AI Chatbox
@@ -222,16 +250,20 @@ namespace AdminUser
         private void LoadEvents()
         {
             var allEvents = _eventSystem.GetAllEvents();
+            WembleyEvent[] filteredArray;
 
-            // Filter logic based on role
             if (_currentUser.UserRole == "Verified_Business")
             {
-                dgvEvents.DataSource = allEvents.Where(e => e != null && e.BusinessID == _currentUser.UserID).ToArray();
+                filteredArray = allEvents.Where(e => e != null && e.BusinessID == _currentUser.UserID).ToArray();
             }
-            else // Admin
+            else
             {
-                dgvEvents.DataSource = allEvents.Where(e => e != null).ToArray();
+                filteredArray = allEvents.Where(e => e != null).ToArray();
             }
+
+            EventSorter.MergeSort(filteredArray, _sortColumn, _sortAscending);
+
+            dgvEvents.DataSource = filteredArray;
 
             if (dgvEvents.Columns.Contains("EventID")) dgvEvents.Columns["EventID"].Visible = false;
             if (dgvEvents.Columns.Contains("BusinessID")) dgvEvents.Columns["BusinessID"].Visible = false;
@@ -363,7 +395,7 @@ namespace AdminUser
 
             // Date and Type side by side
             Label lblDate = new Label { Text = "Date", Font = new Font("Segoe UI", 9, FontStyle.Bold), ForeColor = Color.FromArgb(50, 65, 90), Location = new Point(25, 122), Size = new Size(145, 16) };
-            dtpEventDate = new DateTimePicker { Location = new Point(25, 140), Size = new Size(148, 24), Font = new Font("Segoe UI", 9) };
+            dtpEventDate = new DateTimePicker { Location = new Point(25, 140), Size = new Size(148, 24), Font = new Font("Segoe UI", 9), MinDate = DateTime.Today };
 
             Label lblType = new Label { Text = "Type", Font = new Font("Segoe UI", 9, FontStyle.Bold), ForeColor = Color.FromArgb(50, 65, 90), Location = new Point(187, 122), Size = new Size(145, 16) };
             cmbEventType = new ComboBox { Location = new Point(187, 140), Size = new Size(148, 24), DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9) };
@@ -371,7 +403,7 @@ namespace AdminUser
 
             // Price
             Label lblPrice = new Label { Text = "Price (£)", Font = new Font("Segoe UI", 9, FontStyle.Bold), ForeColor = Color.FromArgb(50, 65, 90), Location = new Point(25, 182), Size = new Size(145, 16) };
-            numPrice = new NumericUpDown { Location = new Point(25, 200), Size = new Size(148, 24), Maximum = 1000, Font = new Font("Segoe UI", 9) };
+            numPrice = new NumericUpDown { Location = new Point(25, 200), Size = new Size(148, 24), Maximum = 10000, Font = new Font("Segoe UI", 9) };
 
             // Separator
             Panel sep = new Panel { Location = new Point(25, 246), Size = new Size(310, 1), BackColor = Color.FromArgb(210, 220, 235) };
@@ -484,7 +516,7 @@ namespace AdminUser
 
             // Date and Type side by side
             Label lblDate = new Label { Text = "Date", Font = new Font("Segoe UI", 9, FontStyle.Bold), ForeColor = Color.FromArgb(50, 65, 90), Location = new Point(25, 122), Size = new Size(145, 16) };
-            dtpEventDate = new DateTimePicker { Location = new Point(25, 140), Size = new Size(148, 24), Font = new Font("Segoe UI", 9), Value = _eventToUpdate.EventDate };
+            dtpEventDate = new DateTimePicker { Location = new Point(25, 140), Size = new Size(148, 24), Font = new Font("Segoe UI", 9), MinDate = DateTime.Today, Value = _eventToUpdate.EventDate };
 
             Label lblType = new Label { Text = "Type", Font = new Font("Segoe UI", 9, FontStyle.Bold), ForeColor = Color.FromArgb(50, 65, 90), Location = new Point(187, 122), Size = new Size(145, 16) };
             cmbEventType = new ComboBox { Location = new Point(187, 140), Size = new Size(148, 24), DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 9) };
@@ -493,7 +525,7 @@ namespace AdminUser
 
             // Price
             Label lblPrice = new Label { Text = "Price (£)", Font = new Font("Segoe UI", 9, FontStyle.Bold), ForeColor = Color.FromArgb(50, 65, 90), Location = new Point(25, 182), Size = new Size(145, 16) };
-            numPrice = new NumericUpDown { Location = new Point(25, 200), Size = new Size(148, 24), Maximum = 1000, Font = new Font("Segoe UI", 9), Value = _eventToUpdate.EventPrice };
+            numPrice = new NumericUpDown { Location = new Point(25, 200), Size = new Size(148, 24), Maximum = 10000, Font = new Font("Segoe UI", 9), Value = _eventToUpdate.EventPrice };
 
             // Separator
             Panel sep = new Panel { Location = new Point(25, 246), Size = new Size(310, 1), BackColor = Color.FromArgb(210, 220, 235) };

@@ -232,6 +232,8 @@ namespace WembleyManagementSystem
         private ComboBox cmbTypeFilter = new ComboBox();
         private bool _buyHandlerAttached = false;
         private Button btnMyTickets = new Button();
+        private string _sortColumn = "EventDate";
+        private bool _sortAscending = true;
 
 
         public ClientForm(EventManagementSystem system, UserManagementSystem userSystem, string loggedInUsername = null)
@@ -400,6 +402,19 @@ namespace WembleyManagementSystem
             eventGrid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
             eventGrid.BackgroundColor = Color.White;
             eventGrid.RowHeadersVisible = false;
+
+            // Use the Merge Sort to the column header click
+            eventGrid.ColumnHeaderMouseClick += (s, e) =>
+            {
+                string clickedCol = eventGrid.Columns[e.ColumnIndex].DataPropertyName;
+                if (string.IsNullOrEmpty(clickedCol)) return; // Ignore "Buy Ticket" action column
+
+                // Toggle ascending/descending
+                if (_sortColumn == clickedCol) _sortAscending = !_sortAscending;
+                else { _sortColumn = clickedCol; _sortAscending = true; }
+
+                ApplySearch(); // Refresh grid with new sort
+            };
 
             // Search panel
             searchPanel.Dock = DockStyle.Top;
@@ -666,7 +681,14 @@ namespace WembleyManagementSystem
 
                     Console.WriteLine($"Buy clicked - EventID accessed from hidden column: {selectedEvent.EventID}");
 
-                    //increase the attendance for the event by 1
+                    // Check Wembley Stadium Capacity
+                    if (selectedEvent.Attendance >= 90000)
+                    {
+                        MessageBox.Show("Sorry, this event is completely sold out!", "Sold Out", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    // increase the attendance for the event by 1
                     selectedEvent.Attendance += 1;
 
                     //updates the attendance for the event
@@ -773,6 +795,9 @@ namespace WembleyManagementSystem
                 bool typeOk = type == "All" || all[i].EventType == type;
                 if (nameOk && typeOk) filtered[idx++] = all[i];
             }
+
+            // Apply Merge Sort before sending to the UI
+            EventSorter.MergeSort(filtered, _sortColumn, _sortAscending);
 
             RefreshGrid(filtered);
         }
@@ -1421,7 +1446,81 @@ namespace WembleyManagementSystem
             }
         }
 
-        public class EventManagementSystem
+    // Sorting algorithm for events in columns
+    public static class EventSorter
+    {
+        // Public method to trigger the sort
+        public static void MergeSort(WembleyEvent[] array, string propertyName, bool ascending)
+        {
+            if (array == null || array.Length <= 1) return;
+            WembleyEvent[] temp = new WembleyEvent[array.Length];
+            Sort(array, temp, 0, array.Length - 1, propertyName, ascending);
+        }
+
+        // Recursive split
+        private static void Sort(WembleyEvent[] array, WembleyEvent[] temp, int left, int right, string propertyName, bool ascending)
+        {
+            if (left >= right) return;
+            int mid = left + (right - left) / 2;
+
+            Sort(array, temp, left, mid, propertyName, ascending);
+            Sort(array, temp, mid + 1, right, propertyName, ascending);
+            Merge(array, temp, left, mid, right, propertyName, ascending);
+        }
+
+        // Merge and compare
+        private static void Merge(WembleyEvent[] array, WembleyEvent[] temp, int left, int mid, int right, string propertyName, bool ascending)
+        {
+            for (int i = left; i <= right; i++) temp[i] = array[i];
+
+            int iLeft = left;
+            int iRight = mid + 1;
+            int curr = left;
+
+            while (iLeft <= mid && iRight <= right)
+            {
+                // Use custom comparator based on column name
+                bool condition = Compare(temp[iLeft], temp[iRight], propertyName, ascending);
+                if (condition)
+                {
+                    array[curr++] = temp[iLeft++];
+                }
+                else
+                {
+                    array[curr++] = temp[iRight++];
+                }
+            }
+
+            int remaining = mid - iLeft;
+            for (int i = 0; i <= remaining; i++)
+            {
+                array[curr + i] = temp[iLeft + i];
+            }
+        }
+
+        // Compares properties based on the column clicked
+        private static bool Compare(WembleyEvent a, WembleyEvent b, string propertyName, bool ascending)
+        {
+            if (a == null && b == null) return true;
+            if (a == null) return !ascending; // Push nulls to the bottom
+            if (b == null) return ascending;
+
+            int result = 0;
+            switch (propertyName)
+            {
+                case "EventName": result = string.Compare(a.EventName, b.EventName, StringComparison.OrdinalIgnoreCase); break;
+                case "EventDate": result = a.EventDate.CompareTo(b.EventDate); break;
+                case "EventType": result = string.Compare(a.EventType, b.EventType, StringComparison.OrdinalIgnoreCase); break;
+                case "Attendance": result = a.Attendance.CompareTo(b.Attendance); break;
+                case "EventPrice": result = a.EventPrice.CompareTo(b.EventPrice); break;
+                default: return true;
+            }
+
+            return ascending ? result <= 0 : result >= 0;
+        }
+    }
+
+    public class EventManagementSystem
         {
             //TODO: public for test should be private
             public EventBinaryTree tree;
