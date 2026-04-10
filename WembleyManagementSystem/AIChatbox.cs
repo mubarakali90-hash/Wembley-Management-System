@@ -253,10 +253,20 @@ You can execute multiple actions in one JSON block. Translate date range deletio
             {
                 var responseJson = await response.Content.ReadAsStringAsync();
                 using JsonDocument doc = JsonDocument.Parse(responseJson);
-                return doc.RootElement.GetProperty("content")[0].GetProperty("text").GetString() ?? "No response.";
+
+                // Traverse the JSON to prevent crashes if the API format shifts
+                if (doc.RootElement.TryGetProperty("content", out JsonElement contentArray) && contentArray.GetArrayLength() > 0)
+                {
+                    if (contentArray[0].TryGetProperty("text", out JsonElement textElement))
+                    {
+                        return textElement.GetString() ?? "No response.";
+                    }
+                }
+                return "AI returned an unexpected format.";
             }
             else
             {
+                // This guarantees a string is returned even if the API call fails
                 string errorBody = await response.Content.ReadAsStringAsync();
                 return $"Error {response.StatusCode}: {errorBody}";
             }
