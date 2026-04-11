@@ -1270,53 +1270,58 @@ namespace WembleyManagementSystem
                 return FindEventRec(root, eventID);
             }
 
-            public EventNode FindEventRec(EventNode currentRoot, int eventID)
+        public EventNode FindEventRec(EventNode currentRoot, int eventID)
+        {
+            // If it reaches a dead end or the tree is empty then return null safely
+            if (currentRoot == null)
             {
-                if (currentRoot.GetEventID() < eventID)
+                return null;
+            }
+
+            if (currentRoot.GetEventID() < eventID)
+            {
+                if (currentRoot.Right != null)
                 {
-                    if (currentRoot.Right != null)
+                    if (currentRoot.Right.GetEventID() == eventID)
                     {
-                        if (currentRoot.Right.GetEventID() == eventID)
-                        {
-                            return currentRoot.Right;
-                        }
-                        else
-                        {
-                            return FindEventRec(currentRoot.Right, eventID);
-                        }
+                        return currentRoot.Right;
                     }
                     else
                     {
-                        return null;
-                    }
-                }
-                else if (currentRoot.GetEventID() > eventID)
-                {
-                    if (currentRoot.Left != null)
-                    {
-                        if (currentRoot.Left.GetEventID() == eventID)
-                        {
-                            return currentRoot.Left;
-                        }
-                        else
-                        {
-                            return FindEventRec(currentRoot.Left, eventID);
-                        }
-                    }
-                    else
-                    {
-                        return null;
+                        return FindEventRec(currentRoot.Right, eventID);
                     }
                 }
                 else
                 {
-                    return currentRoot;
+                    return null;
                 }
-
             }
+            else if (currentRoot.GetEventID() > eventID)
+            {
+                if (currentRoot.Left != null)
+                {
+                    if (currentRoot.Left.GetEventID() == eventID)
+                    {
+                        return currentRoot.Left;
+                    }
+                    else
+                    {
+                        return FindEventRec(currentRoot.Left, eventID);
+                    }
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                return currentRoot;
+            }
+        }
 
-            //Rebalancing Tree
-            private void Rebalance()
+        //Rebalancing Tree
+        private void Rebalance()
             {
 
                 if (root == null)
