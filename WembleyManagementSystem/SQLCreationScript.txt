@@ -1,0 +1,27 @@
+CREATE TABLE Users
+(
+    UserID INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    Username NVARCHAR(100) NOT NULL,
+    Email NVARCHAR(255) NOT NULL,
+    Password NVARCHAR(255) NOT NULL,
+    UserRole NVARCHAR(50) NOT NULL
+);
+
+CREATE TABLE Events
+(
+    EventID INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    EventName NVARCHAR(200) NOT NULL,
+    EventDate DATETIME NOT NULL,
+    EventType NVARCHAR(100) NOT NULL,
+    Attendance INT NOT NULL,
+    EventPrice INT NOT NULL,
+    BusinessID INT NULL
+);
+
+CREATE TABLE Purchases
+(
+    PurchaseID INT IDENTITY(1,1) NOT NULL PRIMARY KEY,
+    UserID INT NOT NULL,
+    EventID INT NOT NULL,
+    PurchaseDate DATETIME NOT NULL
+);
