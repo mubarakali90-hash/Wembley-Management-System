@@ -132,6 +132,23 @@ The system uses these roles:
 - `Verified_Business`
 - `Admin`
 
+## Accounts to Test
+### Admin
+-Username: Admin
+-Password: admin123
+
+### Unverified Business
+-Username: Test_Business
+-Password: 123456
+
+### Verified Business
+-Username: BusinessAccount
+-Password: 123456
+
+### Client
+-Username: client
+-Password: 123456
+
 ## Running the Tests
 
 Unit tests are included using **MSTest**.
