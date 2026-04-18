@@ -81,7 +81,7 @@ We already added your school mail to our Azure so you should be able to open the
 2. On the **Firewall Rules** section click **Add your client IPV4 address (Your ip will show up here)**
 3. Then click this link https://portal.azure.com/#@livemdxac.onmicrosoft.com/resource/subscriptions/6b36cf27-3c67-44a7-9d01-f8967c8275e1/resourceGroups/Wembley/providers/Microsoft.Sql/servers/wembly-server/databases/WemblyDB/connectionStrings
 4. Copy the all **ADO.NET (SQL authentication)** connection string and paste it to `App.config` **connectionString=** section.
-5. As **{your_password}** write mEWBW!hwAKM*G8FBsEokQAK
+5. As **{your_password}** write Password123
 5. Now you should be able to connect the database when you run the app.
 
 ## How to Build and Run
