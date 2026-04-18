@@ -134,20 +134,20 @@ The system uses these roles:
 
 ## Accounts to Test
 ### Admin
--Username: Admin
--Password: admin123
+- Username: Admin
+- Password: admin123
 
 ### Unverified Business
--Username: Test_Business
--Password: 123456
+- Username: Test_Business
+- Password: 123456
 
 ### Verified Business
--Username: BusinessAccount
--Password: 123456
+- Username: BusinessAccount
+- Password: 123456
 
 ### Client
--Username: client
--Password: 123456
+- Username: client
+- Password: 123456
 
 ## Running the Tests
 
