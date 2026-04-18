@@ -511,6 +511,9 @@ namespace WembleyManagementSystem
             chatBox.BorderStyle = BorderStyle.FixedSingle;
             chatBox.Visible = false;
 
+            // Gives the Client AI access to the event database
+            chatBox.EventSystem = _system;
+
             // Create the Chat Toggle Button for the bottom right corner
             Button btnToggleChat = new Button
             {
